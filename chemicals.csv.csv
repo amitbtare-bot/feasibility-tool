@@ -1,0 +1,86 @@
+chemical_id,chemical_name,synonyms,CAS_number
+CH_0001,Water,,7732-18-5
+CH_0002,Methanol,,67-56-1
+CH_0003,Ethanol,,64-17-5
+CH_0004,Isopropyl Alcohol,,67-63-0
+CH_0005,Acetone,,67-64-1
+CH_0006,Ethyl Acetate,,141-78-6
+CH_0007,Butyl Acetate,,123-86-4
+CH_0008,Acetic Acid,,64-19-7
+CH_0009,Formaldehyde,,50-00-0
+CH_0010,Phenol,,108-95-2
+CH_0011,Aniline,,62-53-3
+CH_0012,Ammonia,,7664-41-7
+CH_0013,Urea,,57-13-6
+CH_0014,Sulfuric Acid,,7664-93-9
+CH_0015,Nitric Acid,,7697-37-2
+CH_0016,Hydrochloric Acid,,7647-01-0
+CH_0017,Sodium Hydroxide,,1310-73-2
+CH_0018,Sodium Carbonate,,497-19-8
+CH_0019,Sodium Bicarbonate,,144-55-8
+CH_0020,Calcium Carbonate,,471-34-1
+CH_0021,Calcium Chloride,,10043-52-4
+CH_0022,Chlorine,,7782-50-5
+CH_0023,Hydrogen,,1333-74-0
+CH_0024,Oxygen,,7782-44-7
+CH_0025,Nitrogen,,7727-37-9
+CH_0026,Ethylene,,74-85-1
+CH_0027,Propylene,,115-07-1
+CH_0028,Benzene,,71-43-2
+CH_0029,Toluene,,108-88-3
+CH_0030,Xylene,,1330-20-7
+CH_0031,Styrene,,100-42-5
+CH_0032,Ethylene Oxide,,75-21-8
+CH_0033,Propylene Oxide,,75-56-9
+CH_0034,Ethylene Glycol,,107-21-1
+CH_0035,Propylene Glycol,,57-55-6
+CH_0036,Hydrogen Peroxide,,7722-84-1
+CH_0037,Carbon Dioxide,,124-38-9
+CH_0038,Carbon Monoxide,,630-08-0
+CH_0039,Titanium Dioxide,,13463-67-7
+CH_0040,Zinc Oxide,,1314-13-2
+CH_0041,Aluminium Sulphate,,10043-01-3
+CH_0042,Ferric Chloride,,7705-08-0
+CH_0043,Copper Sulphate,,7758-99-8
+CH_0044,Sodium Hypochlorite,,7681-52-9
+CH_0045,Phosphoric Acid,,7664-38-2
+CH_0046,Ammonium Nitrate,,6484-52-2
+CH_0047,Ammonium Sulphate,,7783-20-2
+CH_0048,Methane,,74-82-8
+CH_0049,Propane,,74-98-6
+CH_0050,Butane,,106-97-8
+CH_0051,Hexane,,110-54-3
+CH_0052,Heptane,,142-82-5
+CH_0053,Cyclohexane,,110-82-7
+CH_0054,Acetaldehyde,,75-07-0
+CH_0055,Vinyl Acetate,,108-05-4
+CH_0056,Acrylic Acid,,79-10-7
+CH_0057,Methyl Methacrylate,,80-62-6
+CH_0058,Butyl Acrylate,,141-32-2
+CH_0059,Maleic Anhydride,,108-31-6
+CH_0060,Phthalic Anhydride,,85-44-9
+CH_0061,Caprolactam,,105-60-2
+CH_0062,Adipic Acid,,124-04-9
+CH_0063,Cyclohexanone,,108-94-1
+CH_0064,Cyclohexanol,,108-93-0
+CH_0065,Linear Alkyl Benzene,,67774-74-7
+CH_0066,LABSA,,85536-14-7
+CH_0067,Sodium Silicate,,1344-09-8
+CH_0068,Zinc Sulphate,,7733-02-0
+CH_0069,Nickel Sulphate,,10101-97-0
+CH_0070,Glycerol,,56-81-5
+CH_0071,Sorbitol,,50-70-4
+CH_0072,Citric Acid,,77-92-9
+CH_0073,Lactic Acid,,50-21-5
+CH_0074,Oleic Acid,,112-80-1
+CH_0075,Stearic Acid,,57-11-4
+CH_0076,Sodium Lauryl Sulphate,,151-21-3
+CH_0077,SLES,,68585-34-2
+CH_0078,Polyethylene,,9002-88-4
+CH_0079,Polypropylene,,9003-07-0
+CH_0080,PVC,,9002-86-2
+CH_0081,Polystyrene,,9003-53-6
+CH_0082,PET,,25038-59-9
+CH_0083,Monoethylene Glycol,,107-21-1
+CH_0084,Diethylene Glycol,,111-46-6
+CH_0085,Triethylene Glycol,,112-27-6
