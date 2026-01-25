@@ -8,14 +8,11 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-:root{
-  --bg-main:#1f2a44;
-}
-
+:root{--bg:#1f2a44;}
 body{
   margin:0;
   font-family:Segoe UI;
-  background:var(--bg-main);
+  background:var(--bg);
   transition:background 1s ease;
 }
 
@@ -108,6 +105,7 @@ button:disabled{opacity:.5}
 
 <body>
 
+<!-- VISUAL BACKGROUND -->
 <div id="visualLayer">
   <img id="moleculeImg" src="" alt="">
 </div>
@@ -122,29 +120,35 @@ button:disabled{opacity:.5}
 <label>Search Chemical</label>
 <input id="chemSearch" placeholder="ethyl, acetone…" oninput="filterChemicals()">
 <div id="chemResults"></div>
-<input type="hidden" id="chemical">
 
 <label>Capacity (TPA)</label>
-<input id="scale" type="number" oninput="checkReady()">
+<input id="scale" type="number" placeholder="Enter capacity" oninput="checkReady()">
 
-<button id="evalBtn" onclick="evaluate()" disabled>Evaluate Feasibility</button>
+<button id="evalBtn" onclick="evaluate()" disabled>
+Evaluate Feasibility
+</button>
 
-<div class="grid" id="grid" style="display:none">
+<div class="grid" id="resultGrid" style="display:none">
   <div class="card"><h3>CAPEX</h3><div id="capex"></div></div>
   <div class="card"><h3>OPEX</h3><div id="opex"></div></div>
   <div class="card"><h3>EBITDA</h3><div id="ebitda"></div></div>
   <div class="card"><h3>Ideal Scale</h3><div id="ideal"></div></div>
 </div>
 
-<div id="verdictBox" class="verdict">Select chemical & capacity</div>
+<div id="verdictBox" class="verdict">
+Select chemical & capacity
+</div>
 
 </main>
 
 <script>
-let CHEM_DB=[],DB_READY=false;
+/* ================= GLOBAL STATE ================= */
+let CHEM_DB = [];
+let DB_READY = false;
+let SELECTED_CHEM = null;
 
-/* THEMES */
-const THEMES={
+/* ================= THEMES ================= */
+const THEMES = {
   Esterification:"#1f2a44",
   Hydrogenation:"#1b5e20",
   Oxidation:"#263238",
@@ -152,83 +156,97 @@ const THEMES={
   default:"#1f2a44"
 };
 
-/* LOAD CSV */
+/* ================= LOAD CSV ================= */
 fetch("chemicals.csv")
 .then(r=>r.text())
 .then(t=>{
-  const rows=t.trim().split("\n");
-  const h=rows[0].split(",");
-  CHEM_DB=rows.slice(1).map(r=>{
-    const v=r.split(",");
-    let o={};
-    h.forEach((k,i)=>o[k.trim()]=(v[i]||"").trim());
+  const rows = t.trim().split("\n");
+  const h = rows[0].split(",");
+  CHEM_DB = rows.slice(1).map(r=>{
+    const v = r.split(",");
+    let o = {};
+    h.forEach((k,i)=>o[k.trim()] = (v[i]||"").trim());
     return o;
   });
-  DB_READY=true;
+  DB_READY = true;
 });
 
-/* SEARCH */
+/* ================= SEARCH ================= */
 function filterChemicals(){
-  const q=chemSearch.value.toLowerCase();
+  const q = chemSearch.value.toLowerCase();
   chemResults.innerHTML="";
   if(q.length<2){chemResults.style.display="none";return;}
-  CHEM_DB.filter(c=>c.chemical_name.toLowerCase().includes(q))
-  .forEach(c=>{
-    const d=document.createElement("div");
-    d.innerText=c.chemical_name;
-    d.onclick=()=>selectChemical(c);
-    chemResults.appendChild(d);
-  });
+
+  CHEM_DB
+    .filter(c=>c.chemical_name.toLowerCase().includes(q))
+    .forEach(c=>{
+      const d=document.createElement("div");
+      d.innerText=c.chemical_name;
+      d.onclick=()=>selectChemical(c);
+      chemResults.appendChild(d);
+    });
+
   chemResults.style.display="block";
 }
 
 function selectChemical(c){
-  chemSearch.value=c.chemical_name;
-  chemical.value=c.chemical_id;
+  SELECTED_CHEM = c;
+  chemSearch.value = c.chemical_name;
   chemResults.style.display="none";
 
   document.body.style.background =
     THEMES[c.process_family] || THEMES.default;
 
-  moleculeImg.src="assets/molecule.png";
-  moleculeImg.style.display="block";
+  moleculeImg.src = "assets/molecule.png";
+  moleculeImg.style.display = "block";
 
   checkReady();
 }
 
+/* ================= READINESS ================= */
 function checkReady(){
-  evalBtn.disabled=!(DB_READY && chemical.value && scale.value);
+  evalBtn.disabled = !(DB_READY && SELECTED_CHEM && scale.value);
 }
 
+/* ================= EVALUATE ================= */
 function evaluate(){
-  const c=CHEM_DB.find(x=>x.chemical_id===chemical.value);
-  const opex=+c.base_opex_rs_per_t;
-  const ebitda=((c.selling_price_rs_per_t-opex)/c.selling_price_rs_per_t*100).toFixed(1);
+  if(!SELECTED_CHEM) return;
 
-  grid.style.display="grid";
-  capex.innerText=`₹${c.base_capex_cr} Cr`;
-  opexEl.innerText=`₹${opex}`;
-  ebitdaEl.innerText=`${ebitda} %`;
-  ideal.innerText=`${c.ideal_scale_min_tpa}-${c.ideal_scale_max_tpa}`;
+  const c = SELECTED_CHEM;
+  const S = +scale.value;
 
-  verdictBox.className="verdict "+(ebitda>15?"good":ebitda>10?"warn":"bad");
-  verdictBox.innerText=ebitda>15?"Viable":ebitda>10?"Marginal":"Not Recommended";
+  resultGrid.style.display="grid";
+
+  const opex = +c.base_opex_rs_per_t;
+  const ebitda = ((c.selling_price_rs_per_t - opex) / c.selling_price_rs_per_t * 100).toFixed(1);
+
+  capex.innerText = `₹ ${c.base_capex_cr} Cr`;
+  opexEl.innerText = `₹ ${opex}`;
+  ebitdaEl.innerText = `${ebitda} %`;
+  ideal.innerText = `${c.ideal_scale_min_tpa} – ${c.ideal_scale_max_tpa} TPA`;
+
+  let cls="bad",txt="Not Recommended";
+  if(ebitda>15){cls="good";txt="Commercially Viable";}
+  else if(ebitda>10){cls="warn";txt="Marginal – Scale Sensitive";}
+
+  verdictBox.className="verdict "+cls;
+  verdictBox.innerText=txt;
 }
 
-/* ELEMENTS */
-const chemSearch=document.getElementById("chemSearch");
-const chemResults=document.getElementById("chemResults");
-const chemical=document.getElementById("chemical");
-const scale=document.getElementById("scale");
-const evalBtn=document.getElementById("evalBtn");
+/* ================= ELEMENTS ================= */
+const chemSearch = document.getElementById("chemSearch");
+const chemResults = document.getElementById("chemResults");
+const scale = document.getElementById("scale");
+const evalBtn = document.getElementById("evalBtn");
 
-const moleculeImg=document.getElementById("moleculeImg");
-const capex=document.getElementById("capex");
-const opexEl=document.getElementById("opex");
-const ebitdaEl=document.getElementById("ebitda");
-const ideal=document.getElementById("ideal");
-const verdictBox=document.getElementById("verdictBox");
-const grid=document.getElementById("grid");
+const moleculeImg = document.getElementById("moleculeImg");
+const resultGrid = document.getElementById("resultGrid");
+
+const capex = document.getElementById("capex");
+const opexEl = document.getElementById("opex");
+const ebitdaEl = document.getElementById("ebitda");
+const ideal = document.getElementById("ideal");
+const verdictBox = document.getElementById("verdictBox");
 </script>
 
 </body>
