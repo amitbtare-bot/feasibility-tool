@@ -2,10 +2,8 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Chemical Feasibility Platform</title>
+<title>Chemical Plant Feasibility Tool</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 :root{--bg:#1f2a44;}
@@ -105,14 +103,13 @@ button:disabled{opacity:.5}
 
 <body>
 
-<!-- VISUAL BACKGROUND -->
 <div id="visualLayer">
   <img id="moleculeImg" src="" alt="">
 </div>
 
 <header>
-<h1>Chemical Feasibility Tool</h1>
-<p>Scale-first • Engineering-driven</p>
+<h1>Chemical Plant Feasibility Tool</h1>
+<p>Scale-first • Engineering-driven decision support</p>
 </header>
 
 <main>
@@ -130,7 +127,7 @@ Evaluate Feasibility
 
 <div class="grid" id="resultGrid" style="display:none">
   <div class="card"><h3>CAPEX</h3><div id="capex"></div></div>
-  <div class="card"><h3>OPEX</h3><div id="opex"></div></div>
+  <div class="card"><h3>OPEX (₹/t)</h3><div id="opex"></div></div>
   <div class="card"><h3>EBITDA</h3><div id="ebitda"></div></div>
   <div class="card"><h3>Ideal Scale</h3><div id="ideal"></div></div>
 </div>
@@ -161,13 +158,26 @@ fetch("chemicals.csv")
 .then(r=>r.text())
 .then(t=>{
   const rows = t.trim().split("\n");
-  const h = rows[0].split(",");
+  const headers = rows[0].split(",").map(h=>h.trim());
+
   CHEM_DB = rows.slice(1).map(r=>{
     const v = r.split(",");
-    let o = {};
-    h.forEach((k,i)=>o[k.trim()] = (v[i]||"").trim());
-    return o;
+    let raw = {};
+    headers.forEach((h,i)=>raw[h] = (v[i]||"").trim());
+
+    /* NORMALIZE FIELD NAMES */
+    return {
+      chemical_name: raw.chemical_name || raw.name,
+      process_family: raw.process_family || raw.process,
+      base_capex_cr: parseFloat(raw.base_capex_cr || raw.capex_cr || 0),
+      base_opex_rs_per_t: parseFloat(raw.base_opex_rs_per_t || raw.opex_rs_per_t || raw.opex || 0),
+      selling_price_rs_per_t: parseFloat(raw.selling_price_rs_per_t || raw.selling_price || 0),
+      ideal_scale_min_tpa: parseFloat(raw.ideal_scale_min_tpa || raw.min_scale || 0),
+      ideal_scale_max_tpa: parseFloat(raw.ideal_scale_max_tpa || raw.max_scale || 0),
+      molecule_image: raw.molecule_image || "assets/molecule.png"
+    };
   });
+
   DB_READY = true;
 });
 
@@ -197,7 +207,7 @@ function selectChemical(c){
   document.body.style.background =
     THEMES[c.process_family] || THEMES.default;
 
-  moleculeImg.src = "assets/molecule.png";
+  moleculeImg.src = c.molecule_image;
   moleculeImg.style.display = "block";
 
   checkReady();
@@ -217,13 +227,15 @@ function evaluate(){
 
   resultGrid.style.display="grid";
 
-  const opex = +c.base_opex_rs_per_t;
-  const ebitda = ((c.selling_price_rs_per_t - opex) / c.selling_price_rs_per_t * 100).toFixed(1);
+  const opex = c.base_opex_rs_per_t;
+  const ebitda = c.selling_price_rs_per_t
+    ? ((c.selling_price_rs_per_t - opex) / c.selling_price_rs_per_t * 100).toFixed(1)
+    : 0;
 
-  capex.innerText = `₹ ${c.base_capex_cr} Cr`;
-  opexEl.innerText = `₹ ${opex}`;
+  capex.innerText = `₹ ${c.base_capex_cr || "—"} Cr`;
+  opexEl.innerText = `₹ ${opex || "—"}`;
   ebitdaEl.innerText = `${ebitda} %`;
-  ideal.innerText = `${c.ideal_scale_min_tpa} – ${c.ideal_scale_max_tpa} TPA`;
+  ideal.innerText = `${c.ideal_scale_min_tpa || "—"} – ${c.ideal_scale_max_tpa || "—"} TPA`;
 
   let cls="bad",txt="Not Recommended";
   if(ebitda>15){cls="good";txt="Commercially Viable";}
