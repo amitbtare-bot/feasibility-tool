@@ -70,7 +70,7 @@ footer{text-align:center;padding:15px;opacity:.8}
 
 <input type="hidden" id="chemical">
 
-<label>Comfortable Capacity (TPA)</label>
+<label> Capacity (TPA)</label>
 <input type="number" id="scale" value="2500" oninput="evaluate()">
 
 <button onclick="evaluate()">Evaluate Feasibility</button>
@@ -235,3 +235,4 @@ function downloadReport(){
   y+=5;
   L("Chemical: "+chemSearch.value);
   L("Process Family: "+(CHEM_DB.find(x=>x.chemical_
+
