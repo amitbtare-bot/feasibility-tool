@@ -2,121 +2,170 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Small-Scale Chemical Feasibility Platform</title>
+<title>Chemical Feasibility Platform</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- Chart -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<!-- PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-body{font-family:Segoe UI;background:#1f2a44;color:#fff;margin:0}
+body{
+  font-family:Segoe UI;
+  background:#1f2a44;
+  color:#fff;
+  margin:0;
+  transition:background 1.2s ease;
+}
+
 header{text-align:center;padding:20px}
-main{max-width:1200px;margin:auto;background:#f4f6f8;color:#222;padding:30px;border-radius:14px}
+
+main{
+  max-width:1200px;
+  margin:auto;
+  background:#f4f6f8;
+  color:#222;
+  padding:30px;
+  border-radius:14px;
+  position:relative;
+  z-index:2;
+}
 
 label{font-weight:600;margin-top:10px;display:block}
 input,button{width:100%;padding:8px;margin-top:6px}
 button{background:#263238;color:#fff;border:none;margin-top:12px;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+
+#moleculeStage{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  pointer-events:none;
+  z-index:0;
+}
+
+#molecule{
+  width:300px;
+  opacity:0.15;
+  animation:spin 40s linear infinite;
+}
+
+@keyframes spin{
+  from{transform:rotateY(0deg) rotateX(15deg);}
+  to{transform:rotateY(360deg) rotateX(15deg);}
+}
 
 #chemResults{
   background:#fff;color:#000;border-radius:6px;
-  max-height:220px;overflow:auto;display:none;
-  border:1px solid #ccc;
+  max-height:200px;overflow:auto;display:none;
 }
+
 #chemResults div{
-  padding:6px;cursor:pointer;border-bottom:1px solid #eee;
+  padding:6px;cursor:pointer;border-bottom:1px solid #eee
 }
 #chemResults div:hover{background:#e0e0e0}
 
-.small{font-size:12px;color:#555}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:15px;margin-top:20px
+}
 
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-gap:15px;margin-top:20px}
-.card{background:#263238;color:#fff;padding:15px;border-radius:10px;text-align:center}
+.card{
+  background:#263238;color:#fff;
+  padding:15px;border-radius:10px;text-align:center
+}
 
 .verdict{padding:15px;border-radius:10px;font-size:18px;margin-top:20px}
 .good{background:#2e7d32}
 .warn{background:#ef6c00}
 .bad{background:#c62828}
 
-table{width:100%;border-collapse:collapse;margin-top:15px}
-th,td{border:1px solid #bbb;padding:6px;text-align:center;font-size:14px}
-
-.altBox{
-  background:#eef3f7;
-  border-left:5px solid #263238;
-  padding:15px;
-  margin-top:25px;
-  border-radius:8px;
-}
-
 canvas{margin-top:25px}
-footer{text-align:center;padding:15px;opacity:.8}
 </style>
 </head>
 
 <body>
 
+<!-- MOLECULE VISUAL -->
+<div id="moleculeStage">
+  <div id="molecule"></div>
+</div>
+
 <header>
-<h1>Small-Scale Chemical Feasibility Tool</h1>
-<p>Scale-first feasibility • Engineering-driven</p>
+<h1>Chemical Feasibility Tool</h1>
+<p>Scale-first • Engineering-driven</p>
 </header>
 
 <main>
 
 <label>Search Chemical</label>
-<input type="text" id="chemSearch"
-  placeholder="ethyl, resin, 141-78-6, esterification..."
-  oninput="filterChemicals()">
-
+<input id="chemSearch" placeholder="ethyl, acetone, resin…" oninput="filterChemicals()">
 <div id="chemResults"></div>
 <input type="hidden" id="chemical">
 
-<!-- ✅ NO DEFAULT VALUE -->
 <label>Capacity (TPA)</label>
-<input type="number" id="scale" placeholder="Enter plant capacity">
+<input id="scale" type="number" placeholder="Enter plant capacity" oninput="checkReady()">
 
-<button onclick="evaluate()">Evaluate Feasibility</button>
+<button id="evalBtn" onclick="evaluate()" disabled>Evaluate Feasibility</button>
 
-<div class="grid" id="resultGrid" style="display:none">
-  <div class="card"><h3>CAPEX Range</h3><div id="capex">—</div></div>
-  <div class="card"><h3>OPEX (₹/t)</h3><div id="opex">—</div></div>
-  <div class="card"><h3>EBITDA %</h3><div id="ebitda">—</div></div>
-  <div class="card"><h3>Ideal Scale</h3><div id="ideal">—</div></div>
+<div class="grid" id="grid" style="display:none">
+  <div class="card"><h3>CAPEX</h3><div id="capex"></div></div>
+  <div class="card"><h3>OPEX</h3><div id="opex"></div></div>
+  <div class="card"><h3>EBITDA</h3><div id="ebitda"></div></div>
+  <div class="card"><h3>Ideal Scale</h3><div id="ideal"></div></div>
 </div>
 
-<div id="verdictBox" class="verdict">Select a chemical and capacity to evaluate</div>
+<div id="verdictBox" class="verdict">Select chemical & capacity</div>
 
-<button onclick="downloadReport()">📄 Download Feasibility Report (PDF)</button>
-
-<h2>Utilities & Manpower</h2>
-<table id="utilTable" style="display:none">
-<tr><th>Parameter</th><th>Value</th></tr>
-<tr><td>Steam (t/y)</td><td id="steam">—</td></tr>
-<tr><td>Power (kWh/y)</td><td id="power">—</td></tr>
-<tr><td>Manpower (Nos)</td><td id="manpower">—</td></tr>
-</table>
-
-<h2>Scale Sensitivity (EBITDA)</h2>
 <canvas id="chart"></canvas>
-
-<div id="alternatives" class="altBox" style="display:none"></div>
 
 </main>
 
-<footer>
-Concept-level • Indicative only • Not a substitute for detailed engineering
-</footer>
-
 <script>
-let CHEM_DB=[],chart;
+let CHEM_DB=[],DB_READY=false,chart;
+
+const THEMES={
+  Esterification:"#1f2a44",
+  Hydrogenation:"#1b5e20",
+  Oxidation:"#263238",
+  Resin_Polymerization:"#4a148c",
+  default:"#1f2a44"
+};
+
+/* SIMPLE INLINE SVG MOLECULES */
+const MOLECULES={
+  "Ethyl Acetate":`
+  <svg viewBox="0 0 200 120">
+    <circle cx="40" cy="60" r="8"/><circle cx="80" cy="60" r="8"/>
+    <circle cx="120" cy="60" r="8"/><circle cx="160" cy="60" r="8"/>
+    <line x1="48" y1="60" x2="72" y2="60" stroke="black"/>
+    <line x1="88" y1="60" x2="112" y2="60" stroke="black"/>
+    <line x1="128" y1="60" x2="152" y2="60" stroke="black"/>
+  </svg>`,
+  "Acetone":`
+  <svg viewBox="0 0 200 120">
+    <circle cx="50" cy="60" r="8"/>
+    <circle cx="100" cy="60" r="10"/>
+    <circle cx="150" cy="60" r="8"/>
+    <line x1="58" y1="60" x2="90" y2="60" stroke="black"/>
+    <line x1="110" y1="60" x2="142" y2="60" stroke="black"/>
+  </svg>`,
+  "Isopropyl Alcohol":`
+  <svg viewBox="0 0 200 120">
+    <circle cx="70" cy="60" r="8"/>
+    <circle cx="110" cy="40" r="8"/>
+    <circle cx="110" cy="80" r="8"/>
+    <line x1="78" y1="60" x2="102" y2="44" stroke="black"/>
+    <line x1="78" y1="60" x2="102" y2="76" stroke="black"/>
+  </svg>`
+};
 
 /* LOAD CSV */
-async function loadChemicalDB(){
-  const r=await fetch("chemicals.csv");
-  const t=await r.text();
+fetch("chemicals.csv")
+.then(r=>r.text())
+.then(t=>{
   const rows=t.trim().split("\n");
   const h=rows[0].split(",");
   CHEM_DB=rows.slice(1).map(r=>{
@@ -124,111 +173,55 @@ async function loadChemicalDB(){
     let o={};h.forEach((k,i)=>o[k.trim()]=(v[i]||"").trim());
     return o;
   });
-}
-loadChemicalDB();
+  DB_READY=true;
+});
 
 /* SEARCH */
 function filterChemicals(){
   const q=chemSearch.value.toLowerCase();
   chemResults.innerHTML="";
-  if(q.length<2){chemResults.style.display="none";return;}
-  CHEM_DB.filter(c=>
-    c.chemical_name.toLowerCase().includes(q) ||
-    (c.synonyms||"").toLowerCase().includes(q) ||
-    (c.CAS_number||"").toLowerCase().includes(q) ||
-    (c.process_family||"").toLowerCase().includes(q)
-  ).forEach(c=>{
+  if(q.length<2)return chemResults.style.display="none";
+  CHEM_DB.filter(c=>c.chemical_name.toLowerCase().includes(q))
+  .forEach(c=>{
     const d=document.createElement("div");
-    d.innerHTML=`<b>${c.chemical_name}</b><br><span class="small">${c.process_family||""}</span>`;
+    d.innerText=c.chemical_name;
     d.onclick=()=>selectChemical(c);
     chemResults.appendChild(d);
   });
   chemResults.style.display="block";
 }
+
 function selectChemical(c){
   chemSearch.value=c.chemical_name;
   chemical.value=c.chemical_id;
   chemResults.style.display="none";
+
+  document.body.style.background=THEMES[c.process_family]||THEMES.default;
+  molecule.innerHTML=MOLECULES[c.chemical_name]||"";
+
+  checkReady();
 }
 
-/* CORE */
+function checkReady(){
+  evalBtn.disabled=!(DB_READY && chemical.value && scale.value);
+}
+
 function evaluate(){
-  if(!chemical.value || !scale.value){
-    alert("Please select a chemical and enter capacity");
-    return;
-  }
-
-  document.getElementById("resultGrid").style.display="grid";
-  document.getElementById("utilTable").style.display="table";
-
   const c=CHEM_DB.find(x=>x.chemical_id===chemical.value);
   const S=+scale.value;
 
-  const steam=(c.steam_intensity==="High"?1.4:c.steam_intensity==="Medium"?1.1:0.8)*S;
-  const power=(c.power_intensity==="High"?110:c.power_intensity==="Medium"?90:70)*S;
-  const manpower=S<3000?20:S<6000?28:35;
+  grid.style.display="grid";
 
-  const opex=+c.base_opex_rs_per_t+(S<c.ideal_scale_min_tpa?6000:0);
+  const opex=+c.base_opex_rs_per_t;
   const ebitda=((c.selling_price_rs_per_t-opex)/c.selling_price_rs_per_t*100).toFixed(1);
 
-  capex.innerText=`₹${(c.base_capex_cr*0.85).toFixed(1)}–${(c.base_capex_cr*1.15).toFixed(1)} Cr`;
-  opexEl.innerText=`₹${opex.toFixed(0)}`;
+  capex.innerText=`₹${c.base_capex_cr} Cr`;
+  opexEl.innerText=`₹${opex}`;
   ebitdaEl.innerText=`${ebitda} %`;
-  ideal.innerText=`${c.ideal_scale_min_tpa}–${c.ideal_scale_max_tpa} TPA`;
+  ideal.innerText=`${c.ideal_scale_min_tpa}-${c.ideal_scale_max_tpa}`;
 
-  steamEl.innerText=Math.round(steam);
-  powerEl.innerText=Math.round(power);
-  manpowerEl.innerText=manpower;
-
-  let v="Commercially Viable",cls="good";
-  if(S<c.min_viable_tpa||ebitda<10){v="Not Recommended";cls="bad";}
-  else if(S<c.ideal_scale_min_tpa||ebitda<15){v="Marginal – Scale Sensitive";cls="warn";}
-  verdictBox.className="verdict "+cls;
-  verdictBox.innerText=v;
-
-  drawChart(c);
-  suggestAlternatives(c,S);
-}
-
-/* CHART */
-function drawChart(c){
-  const xs=[500,1000,2000,3000,5000,8000];
-  const ys=xs.map(s=>{
-    const o=+c.base_opex_rs_per_t+(s<c.ideal_scale_min_tpa?6000:0);
-    return ((c.selling_price_rs_per_t-o)/c.selling_price_rs_per_t*100).toFixed(1);
-  });
-  if(chart)chart.destroy();
-  chart=new Chart(chartCanvas,{type:"line",data:{labels:xs,datasets:[{label:"EBITDA %",data:ys,borderWidth:3}]}})
-}
-
-/* ALTERNATIVES */
-function suggestAlternatives(base,cap){
-  const box=document.getElementById("alternatives");
-  const alts=CHEM_DB.filter(c=>
-    c.chemical_id!==base.chemical_id &&
-    c.process_family===base.process_family &&
-    cap>=+c.ideal_scale_min_tpa &&
-    cap<=+c.ideal_scale_max_tpa
-  );
-  if(!alts.length){box.style.display="none";return;}
-  let html="<h3>🔁 Better-suited alternatives at this capacity</h3><table><tr><th>Chemical</th><th>Why</th></tr>";
-  alts.slice(0,4).forEach(c=>{
-    html+=`<tr><td>${c.chemical_name}</td><td>Ideal scale match</td></tr>`;
-  });
-  html+="</table>";
-  box.innerHTML=html;
-  box.style.display="block";
-}
-
-/* PDF (unchanged) */
-function downloadReport(){
-  if(!chemical.value || !scale.value)return alert("Complete inputs first");
-  const {jsPDF}=window.jspdf;
-  const d=new jsPDF();
-  d.text("Concept Feasibility Report",20,20);
-  d.text("Chemical: "+chemSearch.value,20,30);
-  d.text("Capacity: "+scale.value+" TPA",20,40);
-  d.save(chemSearch.value+"_Report.pdf");
+  verdictBox.className="verdict "+(ebitda>15?"good":ebitda>10?"warn":"bad");
+  verdictBox.innerText=ebitda>15?"Viable":ebitda>10?"Marginal":"Not Recommended";
 }
 
 /* ELEMENTS */
@@ -236,17 +229,15 @@ const chemSearch=document.getElementById("chemSearch");
 const chemResults=document.getElementById("chemResults");
 const chemical=document.getElementById("chemical");
 const scale=document.getElementById("scale");
+const evalBtn=document.getElementById("evalBtn");
 
 const capex=document.getElementById("capex");
 const opexEl=document.getElementById("opex");
 const ebitdaEl=document.getElementById("ebitda");
 const ideal=document.getElementById("ideal");
-
-const steamEl=document.getElementById("steam");
-const powerEl=document.getElementById("power");
-const manpowerEl=document.getElementById("manpower");
 const verdictBox=document.getElementById("verdictBox");
-const chartCanvas=document.getElementById("chart");
+const molecule=document.getElementById("molecule");
+const grid=document.getElementById("grid");
 </script>
 
 </body>
