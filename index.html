@@ -47,8 +47,6 @@ button{
   cursor:pointer;
 }
 
-button:hover{opacity:.9}
-
 #chemResults{
   background:#fff;
   border:1px solid #ccc;
@@ -119,7 +117,7 @@ button:hover{opacity:.9}
 <main>
 
 <label>Search Chemical</label>
-<input id="chemSearch" placeholder="Type chemical name (e.g. Butyl Acetate)" oninput="filterChemicals()">
+<input id="chemSearch" placeholder="Type chemical name (e.g. Methanol)" oninput="filterChemicals()">
 <div id="chemResults"></div>
 <div id="casDisplay"></div>
 
@@ -149,7 +147,7 @@ Select chemical & capacity
 let CHEM_DB = [];
 let SELECTED_CHEM = null;
 
-/* ================= LOAD CSV ================= */
+/* ================= LOAD CSV (EXACT MATCH) ================= */
 fetch("chemicals.csv")
 .then(r => r.text())
 .then(t => {
@@ -158,9 +156,16 @@ fetch("chemicals.csv")
 
   CHEM_DB = rows.slice(1).map(r => {
     const v = r.split(",");
-    let o = {};
-    headers.forEach((h,i)=>o[h]=(v[i]||"").trim());
-    return o;
+    let raw = {};
+    headers.forEach((h,i)=>raw[h]=(v[i]||"").trim());
+
+    /* NORMALIZED OBJECT */
+    return {
+      chemical_id: raw.chemical_id,
+      chemical_name: raw.chemical_name,
+      synonyms: raw.synonyms,
+      cas: raw.CAS_number
+    };
   });
 });
 
@@ -177,14 +182,13 @@ function filterChemicals(){
   }
 
   const matches = CHEM_DB.filter(c =>
-    (c.chemical_name || c.name || "").toLowerCase().includes(q)
+    c.chemical_name.toLowerCase().includes(q)
   );
 
   matches.forEach(c=>{
-    const cas = c.cas || c.CAS || c.cas_number || "N/A";
     const d = document.createElement("div");
-    d.innerHTML = `<strong>${c.chemical_name || c.name}</strong><br>
-                   <small>CAS: ${cas}</small>`;
+    d.innerHTML = `<strong>${c.chemical_name}</strong><br>
+                   <small>CAS: ${c.cas}</small>`;
     d.onclick = () => selectChemical(c);
     chemResults.appendChild(d);
   });
@@ -192,23 +196,22 @@ function filterChemicals(){
   chemResults.style.display = "block";
 }
 
+/* ================= SELECT ================= */
 function selectChemical(c){
   SELECTED_CHEM = c;
-  chemSearch.value = c.chemical_name || c.name;
+  chemSearch.value = c.chemical_name;
   chemResults.style.display = "none";
-
-  const cas = c.cas || c.CAS || c.cas_number || "N/A";
-  casDisplay.innerText = `CAS Number: ${cas}`;
+  casDisplay.innerText = `CAS Number: ${c.cas}`;
 }
 
 /* ================= EVALUATE (BULLETPROOF) ================= */
 function evaluate(){
   const typed = chemSearch.value.trim().toLowerCase();
 
-  /* HARD RESOLVE CHEMICAL IF USER DID NOT CLICK */
+  /* HARD RESOLVE IF USER DID NOT CLICK */
   if(!SELECTED_CHEM){
     SELECTED_CHEM = CHEM_DB.find(c =>
-      (c.chemical_name || c.name || "").toLowerCase() === typed
+      c.chemical_name.toLowerCase() === typed
     );
   }
 
@@ -222,7 +225,7 @@ function evaluate(){
 
   resultGrid.style.display = "grid";
 
-  /* ENGINEERING FALLBACK MODELS (ALWAYS WORK) */
+  /* SAFE GENERIC FEASIBILITY MODELS */
   const capex = (S / 1000 * 12).toFixed(1);        // ₹ Cr
   const opex  = Math.max(25000, 90000 - S * 8);   // ₹/t
   const sell  = 100000;
