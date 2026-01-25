@@ -22,15 +22,17 @@ button{background:#263238;color:#fff;border:none;margin-top:12px;cursor:pointer}
 
 #chemResults{
   background:#fff;color:#000;border-radius:6px;
-  max-height:180px;overflow:auto;display:none;
+  max-height:220px;overflow:auto;display:none;
   border:1px solid #ccc;
 }
 #chemResults div{
-  padding:6px;cursor:pointer;
+  padding:6px;cursor:pointer;border-bottom:1px solid #eee;
 }
 #chemResults div:hover{
   background:#e0e0e0;
 }
+
+.small{font-size:12px;color:#555}
 
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
 gap:15px;margin-top:20px}
@@ -53,20 +55,19 @@ footer{text-align:center;padding:15px;opacity:.8}
 
 <header>
 <h1>Small-Scale Chemical Feasibility Tool</h1>
-<p>Scale-first feasibility • Concept / Pre-DPR</p>
+<p>Search by name • synonym • CAS • process family</p>
 </header>
 
 <main>
 
-<!-- SEARCH BASED CHEMICAL SELECTION -->
+<!-- SEARCH -->
 <label>Search Chemical</label>
 <input type="text" id="chemSearch"
-  placeholder="Type chemical name (e.g. ethyl, resin, IPA…)"
+  placeholder="e.g. ethyl, acetate, 141-78-6, esterification, resin"
   oninput="filterChemicals()">
 
 <div id="chemResults"></div>
 
-<!-- hidden field for selected chemical_id -->
 <input type="hidden" id="chemical">
 
 <label>Comfortable Capacity (TPA)</label>
@@ -99,11 +100,11 @@ footer{text-align:center;padding:15px;opacity:.8}
 </main>
 
 <footer>
-Indicative only • Not a substitute for detailed engineering
+Concept-level • Indicative only • Not a substitute for detailed engineering
 </footer>
 
 <script>
-/* ================= GLOBAL DB ================= */
+/* ================= GLOBAL ================= */
 let CHEM_DB = [];
 let chart;
 
@@ -118,35 +119,50 @@ async function loadChemicalDB(){
   CHEM_DB = rows.slice(1).map(r=>{
     const v = r.split(",");
     let o = {};
-    headers.forEach((h,i)=>o[h.trim()] = v[i]?.trim());
+    headers.forEach((h,i)=>o[h.trim()] = (v[i]||"").trim());
     return o;
   });
 }
 loadChemicalDB();
 
-/* ================= SEARCH & SELECT ================= */
+/* ================= SEARCH LOGIC ================= */
 function filterChemicals(){
   const q = chemSearch.value.toLowerCase();
   chemResults.innerHTML = "";
 
-  if(q.length < 2){ chemResults.style.display="none"; return; }
+  if(q.length < 2){
+    chemResults.style.display="none";
+    return;
+  }
 
-  CHEM_DB.filter(c =>
-    c.chemical_name.toLowerCase().includes(q)
-  ).forEach(c=>{
+  const matches = CHEM_DB.filter(c=>{
+    return (
+      c.chemical_name.toLowerCase().includes(q) ||
+      (c.synonyms && c.synonyms.toLowerCase().includes(q)) ||
+      (c.CAS_number && c.CAS_number.toLowerCase().includes(q)) ||
+      (c.process_family && c.process_family.toLowerCase().includes(q))
+    );
+  });
+
+  matches.forEach(c=>{
     const d=document.createElement("div");
-    d.innerText=c.chemical_name;
+    d.innerHTML = `
+      <strong>${c.chemical_name}</strong><br>
+      <span class="small">
+        ${c.process_family || ""} 
+        ${c.CAS_number ? " | CAS: "+c.CAS_number : ""}
+      </span>`;
     d.onclick=()=>selectChemical(c);
     chemResults.appendChild(d);
   });
 
-  chemResults.style.display="block";
+  chemResults.style.display = matches.length ? "block" : "none";
 }
 
 function selectChemical(c){
-  chemSearch.value=c.chemical_name;
-  chemical.value=c.chemical_id;
-  chemResults.style.display="none";
+  chemSearch.value = c.chemical_name;
+  chemical.value = c.chemical_id;
+  chemResults.style.display = "none";
   evaluate();
 }
 
@@ -218,39 +234,4 @@ function downloadReport(){
   L("CONCEPT / PRE-FEASIBILITY REPORT");
   y+=5;
   L("Chemical: "+chemSearch.value);
-  L("Capacity: "+scale.value+" TPA");
-  y+=5;
-  L("CAPEX: "+capex.innerText);
-  L("OPEX: "+opex.innerText);
-  L("EBITDA: "+ebitda.innerText);
-  y+=5;
-  L("Steam: "+steamEl.innerText+" t/y");
-  L("Power: "+powerEl.innerText+" kWh/y");
-  L("Manpower: "+manpowerEl.innerText);
-  y+=5;
-  L("Verdict: "+verdictBox.innerText);
-  y+=5;
-  L("DISCLAIMER: Concept-level, indicative only.");
-
-  doc.save(chemSearch.value.replace(/ /g,"_")+"_Feasibility_Report.pdf");
-}
-
-/* ================= ELEMENT REFS ================= */
-const chemSearch=document.getElementById("chemSearch");
-const chemResults=document.getElementById("chemResults");
-const chemical=document.getElementById("chemical");
-
-const capex=document.getElementById("capex");
-const opex=document.getElementById("opex");
-const ebitda=document.getElementById("ebitda");
-const ideal=document.getElementById("ideal");
-
-const steamEl=document.getElementById("steam");
-const powerEl=document.getElementById("power");
-const manpowerEl=document.getElementById("manpower");
-const verdictBox=document.getElementById("verdictBox");
-const chartCanvas=document.getElementById("chart");
-</script>
-
-</body>
-</html>
+  L("Process Family: "+(CHEM_DB.find(x=>x.chemical_
