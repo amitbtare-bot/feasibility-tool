@@ -11,7 +11,6 @@ body{
   font-family:Segoe UI;
   background:#1f2a44;
   color:#fff;
-  transition:background 1s ease;
 }
 header{text-align:center;padding:20px}
 
@@ -50,6 +49,15 @@ button:disabled{opacity:.5}
 .warn{background:#ef6c00}
 .bad{background:#c62828}
 
+.notice{
+  background:#fff3cd;
+  color:#000;
+  padding:10px;
+  border-radius:6px;
+  margin-top:10px;
+  display:none;
+}
+
 .debug{
   background:#fff;
   color:#000;
@@ -72,15 +80,17 @@ button:disabled{opacity:.5}
 <main>
 
 <label>Search Chemical</label>
-<input id="chemSearch" placeholder="ethyl, acetone…" oninput="filterChemicals()">
+<input id="chemSearch" placeholder="Start typing chemical name…" oninput="filterChemicals()">
 <div id="chemResults"></div>
 
-<label>Capacity (TPA)</label>
-<input id="scale" type="number" placeholder="Enter capacity" oninput="checkReady()">
+<div id="notice" class="notice">
+⚠️ Please select a chemical from the list
+</div>
 
-<button id="evalBtn" onclick="evaluate()" disabled>
-Evaluate Feasibility
-</button>
+<label>Capacity (TPA)</label>
+<input id="scale" type="number" placeholder="Enter capacity">
+
+<button onclick="evaluate()">Evaluate Feasibility</button>
 
 <div class="grid" id="resultGrid" style="display:none">
   <div class="card"><h3>CAPEX (₹ Cr)</h3><div id="capex"></div></div>
@@ -91,7 +101,7 @@ Evaluate Feasibility
 
 <div id="verdictBox" class="verdict">Select chemical & capacity</div>
 
-<h3>Debug – Raw Chemical Data (for validation)</h3>
+<h3>Debug – Raw Chemical Data</h3>
 <div id="debug" class="debug"></div>
 
 </main>
@@ -99,72 +109,81 @@ Evaluate Feasibility
 <script>
 let CHEM_DB=[];
 let SELECTED_CHEM=null;
-let DB_READY=false;
 
-/* LOAD CSV – NO ASSUMPTIONS */
+/* LOAD CSV */
 fetch("chemicals.csv")
 .then(r=>r.text())
 .then(t=>{
   const rows=t.trim().split("\n");
   const headers=rows[0].split(",").map(h=>h.trim());
-
   CHEM_DB=rows.slice(1).map(r=>{
     const v=r.split(",");
     let o={};
     headers.forEach((h,i)=>o[h]=(v[i]||"").trim());
     return o;
   });
-
-  DB_READY=true;
 });
 
 /* SEARCH */
 function filterChemicals(){
-  const q=chemSearch.value.toLowerCase();
+  const q=chemSearch.value.trim().toLowerCase();
   chemResults.innerHTML="";
-  if(q.length<2){chemResults.style.display="none";return;}
+  notice.style.display="none";
+  SELECTED_CHEM=null;
 
-  CHEM_DB
-    .filter(c=>Object.values(c).join(" ").toLowerCase().includes(q))
-    .forEach(c=>{
-      const d=document.createElement("div");
-      d.innerText=c.chemical_name || c.name || "Unnamed Chemical";
-      d.onclick=()=>selectChemical(c);
-      chemResults.appendChild(d);
-    });
+  if(q.length<2){
+    chemResults.style.display="none";
+    return;
+  }
+
+  const matches = CHEM_DB.filter(c =>
+    (c.chemical_name || c.name || "").toLowerCase().includes(q)
+  );
+
+  matches.forEach(c=>{
+    const d=document.createElement("div");
+    d.innerText=c.chemical_name || c.name;
+    d.onclick=()=>selectChemical(c);
+    chemResults.appendChild(d);
+  });
 
   chemResults.style.display="block";
+
+  /* AUTO-SELECT ON EXACT MATCH */
+  if(matches.length===1 &&
+     (matches[0].chemical_name || "").toLowerCase() === q){
+    selectChemical(matches[0]);
+  }
 }
 
 function selectChemical(c){
   SELECTED_CHEM=c;
   chemSearch.value=c.chemical_name || c.name;
   chemResults.style.display="none";
-  checkReady();
 }
 
-/* READY CHECK */
-function checkReady(){
-  evalBtn.disabled=!(DB_READY && SELECTED_CHEM && scale.value);
-}
-
-/* EVALUATE – GUARANTEED OUTPUT */
+/* EVALUATE */
 function evaluate(){
+  if(!SELECTED_CHEM){
+    notice.style.display="block";
+    return;
+  }
+
   const S=+scale.value;
   const c=SELECTED_CHEM;
 
   resultGrid.style.display="grid";
 
-  /* FALLBACK ECONOMICS (ALWAYS WORKS) */
-  const capex = Math.max(5, S/1000*12).toFixed(1);      // Cr
-  const opex = Math.max(20000, 80000 - S*5).toFixed(0); // ₹/t
-  const sell = 90000;
+  /* SAFE FALLBACK ECONOMICS */
+  const capex = (S/1000*10).toFixed(1);
+  const opex = Math.max(25000, 85000 - S*10).toFixed(0);
+  const sell = 95000;
   const ebitda = (((sell - opex)/sell)*100).toFixed(1);
 
   capexEl.innerText=capex;
   opexEl.innerText=opex;
   ebitdaEl.innerText=ebitda;
-  idealEl.innerText = S<2000?"Too small":S<10000?"Reasonable":"Large scale";
+  idealEl.innerText=S<1000?"Too small":S<10000?"Reasonable":"Large scale";
 
   let cls="bad",txt="Not Recommended";
   if(ebitda>15){cls="good";txt="Commercially Viable";}
@@ -173,15 +192,14 @@ function evaluate(){
   verdictBox.className="verdict "+cls;
   verdictBox.innerText=txt;
 
-  /* DEBUG – SHOW RAW DATA */
-  debug.innerText = JSON.stringify(c, null, 2);
+  debug.innerText=JSON.stringify(c,null,2);
 }
 
 /* ELEMENTS */
 const chemSearch=document.getElementById("chemSearch");
 const chemResults=document.getElementById("chemResults");
 const scale=document.getElementById("scale");
-const evalBtn=document.getElementById("evalBtn");
+const notice=document.getElementById("notice");
 
 const resultGrid=document.getElementById("resultGrid");
 const capexEl=document.getElementById("capex");
