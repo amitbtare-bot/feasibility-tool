@@ -74,24 +74,25 @@ footer{text-align:center;padding:15px;opacity:.8}
 <div id="chemResults"></div>
 <input type="hidden" id="chemical">
 
+<!-- ✅ NO DEFAULT VALUE -->
 <label>Capacity (TPA)</label>
-<input type="number" id="scale" value="2500" oninput="evaluate()">
+<input type="number" id="scale" placeholder="Enter plant capacity">
 
 <button onclick="evaluate()">Evaluate Feasibility</button>
 
-<div class="grid">
+<div class="grid" id="resultGrid" style="display:none">
   <div class="card"><h3>CAPEX Range</h3><div id="capex">—</div></div>
   <div class="card"><h3>OPEX (₹/t)</h3><div id="opex">—</div></div>
   <div class="card"><h3>EBITDA %</h3><div id="ebitda">—</div></div>
   <div class="card"><h3>Ideal Scale</h3><div id="ideal">—</div></div>
 </div>
 
-<div id="verdictBox" class="verdict">Select a chemical to evaluate</div>
+<div id="verdictBox" class="verdict">Select a chemical and capacity to evaluate</div>
 
 <button onclick="downloadReport()">📄 Download Feasibility Report (PDF)</button>
 
 <h2>Utilities & Manpower</h2>
-<table>
+<table id="utilTable" style="display:none">
 <tr><th>Parameter</th><th>Value</th></tr>
 <tr><td>Steam (t/y)</td><td id="steam">—</td></tr>
 <tr><td>Power (kWh/y)</td><td id="power">—</td></tr>
@@ -101,7 +102,6 @@ footer{text-align:center;padding:15px;opacity:.8}
 <h2>Scale Sensitivity (EBITDA)</h2>
 <canvas id="chart"></canvas>
 
-<!-- 🔁 ALTERNATIVES -->
 <div id="alternatives" class="altBox" style="display:none"></div>
 
 </main>
@@ -149,12 +149,18 @@ function selectChemical(c){
   chemSearch.value=c.chemical_name;
   chemical.value=c.chemical_id;
   chemResults.style.display="none";
-  evaluate();
 }
 
 /* CORE */
 function evaluate(){
-  if(!chemical.value)return;
+  if(!chemical.value || !scale.value){
+    alert("Please select a chemical and enter capacity");
+    return;
+  }
+
+  document.getElementById("resultGrid").style.display="grid";
+  document.getElementById("utilTable").style.display="table";
+
   const c=CHEM_DB.find(x=>x.chemical_id===chemical.value);
   const S=+scale.value;
 
@@ -195,7 +201,7 @@ function drawChart(c){
   chart=new Chart(chartCanvas,{type:"line",data:{labels:xs,datasets:[{label:"EBITDA %",data:ys,borderWidth:3}]}})
 }
 
-/* 🔁 ALTERNATIVES LOGIC */
+/* ALTERNATIVES */
 function suggestAlternatives(base,cap){
   const box=document.getElementById("alternatives");
   const alts=CHEM_DB.filter(c=>
@@ -204,22 +210,19 @@ function suggestAlternatives(base,cap){
     cap>=+c.ideal_scale_min_tpa &&
     cap<=+c.ideal_scale_max_tpa
   );
-
   if(!alts.length){box.style.display="none";return;}
-
   let html="<h3>🔁 Better-suited alternatives at this capacity</h3><table><tr><th>Chemical</th><th>Why</th></tr>";
   alts.slice(0,4).forEach(c=>{
-    html+=`<tr><td>${c.chemical_name}</td>
-    <td>Ideal scale matches (${c.ideal_scale_min_tpa}–${c.ideal_scale_max_tpa} TPA)</td></tr>`;
+    html+=`<tr><td>${c.chemical_name}</td><td>Ideal scale match</td></tr>`;
   });
   html+="</table>";
   box.innerHTML=html;
   box.style.display="block";
 }
 
-/* PDF (unchanged, shortened for clarity) */
+/* PDF (unchanged) */
 function downloadReport(){
-  if(!chemical.value)return alert("Select a chemical first");
+  if(!chemical.value || !scale.value)return alert("Complete inputs first");
   const {jsPDF}=window.jspdf;
   const d=new jsPDF();
   d.text("Concept Feasibility Report",20,20);
@@ -232,6 +235,7 @@ function downloadReport(){
 const chemSearch=document.getElementById("chemSearch");
 const chemResults=document.getElementById("chemResults");
 const chemical=document.getElementById("chemical");
+const scale=document.getElementById("scale");
 
 const capex=document.getElementById("capex");
 const opexEl=document.getElementById("opex");
