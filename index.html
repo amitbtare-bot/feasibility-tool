@@ -1,28 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Chemical Plant Feasibility Tool</title>
+<title>Chemical Plant Feasibility Tool – Diagnostic</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body{margin:0;font-family:Segoe UI,Arial;background:#1f2a44;color:#fff}
-header{text-align:center;padding:24px}
-main{max-width:1200px;margin:auto;background:#f4f6f8;color:#222;padding:30px;border-radius:14px}
-label{font-weight:600;display:block;margin-top:12px}
-input,button{width:100%;padding:10px;margin-top:6px;font-size:15px}
-button{background:#263238;color:#fff;border:none;cursor:pointer}
-#chemResults{background:#fff;border:1px solid #ccc;display:none}
-#chemResults div{padding:8px;cursor:pointer}
-#chemResults div:hover{background:#eee}
-#casDisplay{margin-top:6px;font-size:14px;color:#555}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px;margin-top:25px}
-.card{background:#263238;color:#fff;padding:15px;border-radius:10px;text-align:center}
-.verdict{margin-top:20px;padding:15px;border-radius:10px;font-size:18px;font-weight:600}
-.good{background:#2e7d32}
-.warn{background:#ef6c00}
-.bad{background:#c62828}
-.debug{background:#fff;color:#000;margin-top:25px;padding:15px;border-radius:8px;font-size:13px;white-space:pre-wrap}
+body{margin:0;font-family:Segoe UI;background:#1f2a44;color:#fff}
+header{text-align:center;padding:20px}
+main{max-width:1200px;margin:auto;background:#f4f6f8;color:#222;padding:25px;border-radius:12px}
+button,input{width:100%;padding:10px;margin-top:8px}
+button{background:#263238;color:#fff;border:none}
+pre{background:#000;color:#0f0;padding:12px;font-size:12px;overflow:auto}
+.card{background:#263238;color:#fff;padding:12px;margin-top:10px;border-radius:8px}
 </style>
 </head>
 
@@ -30,153 +20,111 @@ button{background:#263238;color:#fff;border:none;cursor:pointer}
 
 <header>
 <h1>Chemical Plant Feasibility Tool</h1>
-<p>Engineering-first feasibility evaluation</p>
+<p>CSV diagnostic mode</p>
 </header>
 
 <main>
 
-<label>Search Chemical</label>
-<input id="chemSearch" placeholder="Type chemical name (e.g. Methanol)" oninput="filterChemicals()">
-<div id="chemResults"></div>
-<div id="casDisplay"></div>
+<button onclick="loadCSV()">1️⃣ Load chemicals.csv</button>
+<button onclick="evaluate()">2️⃣ Evaluate (forced)</button>
 
-<label>Capacity (TPA)</label>
-<input id="scale" type="number" placeholder="Enter capacity">
-
-<button onclick="evaluate()">Evaluate Feasibility</button>
-
-<div class="grid" id="resultGrid" style="display:none">
-  <div class="card"><h3>CAPEX (₹ Cr)</h3><div id="capex"></div></div>
-  <div class="card"><h3>OPEX (₹/t)</h3><div id="opex"></div></div>
-  <div class="card"><h3>EBITDA (%)</h3><div id="ebitda"></div></div>
-  <div class="card"><h3>Scale Verdict</h3><div id="ideal"></div></div>
+<div class="card">
+<b>Status</b>
+<div id="status">Waiting…</div>
 </div>
 
-<div id="verdictBox" class="verdict">Select chemical & capacity</div>
+<div class="card">
+<b>Raw CSV (first lines)</b>
+<pre id="raw"></pre>
+</div>
 
-<h3>Debug – Selected Chemical Record</h3>
-<div id="debug" class="debug"></div>
+<div class="card">
+<b>Detected Headers</b>
+<pre id="headers"></pre>
+</div>
+
+<div class="card">
+<b>Parsed Chemicals Count</b>
+<pre id="count"></pre>
+</div>
+
+<div class="card">
+<b>Selected Chemical Object</b>
+<pre id="selected"></pre>
+</div>
+
+<div class="card">
+<b>Evaluation Output</b>
+<pre id="output"></pre>
+</div>
 
 </main>
 
 <script>
-let CHEM_DB=[];
-let SELECTED_CHEM=null;
+let CHEM_DB = [];
+let SELECTED_CHEM = null;
 
-/* ===== LOAD CSV / TSV (AUTO-DETECT) ===== */
-fetch("chemicals.csv")
-.then(r=>r.text())
-.then(t=>{
-  const rows=t.trim().split("\n");
+function loadCSV(){
+  fetch("chemicals.csv")
+    .then(r=>{
+      if(!r.ok) throw new Error("Fetch failed: "+r.status);
+      return r.text();
+    })
+    .then(t=>{
+      document.getElementById("status").innerText="CSV loaded";
 
-  // Detect delimiter
-  const delimiter = rows[0].includes("\t") ? "\t" : ",";
+      const lines = t.split(/\r?\n/).filter(l=>l.trim());
+      document.getElementById("raw").innerText = lines.slice(0,5).join("\n");
 
-  const headers = rows[0].split(delimiter).map(h=>h.trim());
+      const delimiter = lines[0].includes("\t") ? "\t" : ",";
+      document.getElementById("status").innerText +=
+        " | Delimiter detected: "+(delimiter==="\t"?"TAB":"COMMA");
 
-  CHEM_DB = rows.slice(1).map(r=>{
-    const v=r.split(delimiter);
-    let raw={};
-    headers.forEach((h,i)=>raw[h]=(v[i]||"").trim());
+      const headers = lines[0].split(delimiter);
+      document.getElementById("headers").innerText = JSON.stringify(headers,null,2);
 
-    return {
-      chemical_id: raw.chemical_id,
-      chemical_name: raw.chemical_name,
-      synonyms: raw.synonyms,
-      cas: raw.CAS_number
-    };
-  });
-});
+      CHEM_DB = lines.slice(1).map(l=>{
+        const v=l.split(delimiter);
+        let o={};
+        headers.forEach((h,i)=>o[h.trim()]=(v[i]||"").trim());
+        return o;
+      });
 
-/* ===== SEARCH ===== */
-function filterChemicals(){
-  const q=chemSearch.value.trim().toLowerCase();
-  chemResults.innerHTML="";
-  casDisplay.innerText="";
-  SELECTED_CHEM=null;
+      document.getElementById("count").innerText = CHEM_DB.length;
 
-  if(q.length<2){chemResults.style.display="none";return;}
-
-  const matches=CHEM_DB.filter(c =>
-    c.chemical_name && c.chemical_name.toLowerCase().includes(q)
-  );
-
-  matches.forEach(c=>{
-    const d=document.createElement("div");
-    d.innerHTML=`<strong>${c.chemical_name}</strong><br><small>CAS: ${c.cas}</small>`;
-    d.onclick=()=>selectChemical(c);
-    chemResults.appendChild(d);
-  });
-
-  chemResults.style.display="block";
+      // auto-pick first chemical if exists
+      if(CHEM_DB.length>0){
+        SELECTED_CHEM = CHEM_DB[0];
+        document.getElementById("selected").innerText =
+          JSON.stringify(SELECTED_CHEM,null,2);
+      }
+    })
+    .catch(e=>{
+      document.getElementById("status").innerText="ERROR: "+e.message;
+    });
 }
 
-/* ===== SELECT ===== */
-function selectChemical(c){
-  SELECTED_CHEM=c;
-  chemSearch.value=c.chemical_name;
-  chemResults.style.display="none";
-  casDisplay.innerText=`CAS Number: ${c.cas}`;
-}
-
-/* ===== EVALUATE ===== */
 function evaluate(){
-  const typed=chemSearch.value.trim().toLowerCase();
-
+  // HARD fallback if CSV failed
   if(!SELECTED_CHEM){
-    const matches=CHEM_DB.filter(c =>
-      c.chemical_name && c.chemical_name.toLowerCase().includes(typed)
-    );
-    if(matches.length===1) SELECTED_CHEM=matches[0];
+    SELECTED_CHEM = {
+      chemical_name:"Methanol (fallback)",
+      CAS_number:"67-56-1"
+    };
   }
 
-  if(!SELECTED_CHEM || !scale.value){
-    alert("Please select a chemical and enter capacity");
-    return;
-  }
+  const S = 1000; // forced scale
+  const capex = (S/1000*12).toFixed(1);
+  const opex = 90000 - S*8;
+  const ebitda = (((100000-opex)/100000)*100).toFixed(1);
 
-  const S=Number(scale.value);
-  const c=SELECTED_CHEM;
-
-  resultGrid.style.display="grid";
-
-  const capex=(S/1000*12).toFixed(1);
-  const opex=Math.max(25000,90000-S*8);
-  const sell=100000;
-  const ebitda=(((sell-opex)/sell)*100).toFixed(1);
-
-  capexEl.innerText=capex;
-  opexEl.innerText=opex;
-  ebitdaEl.innerText=ebitda;
-
-  idealEl.innerText =
-    S<500?"Too small":
-    S<5000?"Feasible niche":
-    S<20000?"Commercial scale":
-    "Large-scale commodity";
-
-  let cls="bad",txt="Not Recommended";
-  if(ebitda>15){cls="good";txt="Commercially Viable";}
-  else if(ebitda>10){cls="warn";txt="Marginal – Scale Sensitive";}
-
-  verdictBox.className="verdict "+cls;
-  verdictBox.innerText=txt;
-
-  debug.innerText=JSON.stringify(c,null,2);
+  document.getElementById("output").innerText =
+    "Chemical: "+(SELECTED_CHEM.chemical_name||"UNKNOWN")+"\n"+
+    "CAS: "+(SELECTED_CHEM.CAS_number||"UNKNOWN")+"\n"+
+    "CAPEX: "+capex+" Cr\n"+
+    "OPEX: "+opex+" ₹/t\n"+
+    "EBITDA: "+ebitda+" %";
 }
-
-/* ===== ELEMENTS ===== */
-const chemSearch=document.getElementById("chemSearch");
-const chemResults=document.getElementById("chemResults");
-const casDisplay=document.getElementById("casDisplay");
-const scale=document.getElementById("scale");
-const resultGrid=document.getElementById("resultGrid");
-const capexEl=document.getElementById("capex");
-const opexEl=document.getElementById("opex");
-const ebitdaEl=document.getElementById("ebitda");
-const idealEl=document.getElementById("ideal");
-const verdictBox=document.getElementById("verdictBox");
-const debug=document.getElementById("debug");
 </script>
 
 </body>
