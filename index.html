@@ -6,36 +6,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
+:root{
+  --bg-main:#1f2a44;
+}
+
 body{
-  font-family:Segoe UI;
-  background:#1f2a44;
-  color:#fff;
   margin:0;
-  transition:background 1.2s ease;
+  font-family:Segoe UI;
+  background:var(--bg-main);
+  transition:background 1s ease;
 }
 
-header{text-align:center;padding:20px}
-
-main{
-  max-width:1200px;
-  margin:auto;
-  background:#f4f6f8;
-  color:#222;
-  padding:30px;
-  border-radius:14px;
-  position:relative;
-  z-index:2;
+header{
+  text-align:center;
+  padding:20px;
+  color:#fff;
 }
 
-label{font-weight:600;margin-top:10px;display:block}
-input,button{width:100%;padding:8px;margin-top:6px}
-button{background:#263238;color:#fff;border:none;margin-top:12px;cursor:pointer}
-button:disabled{opacity:.5;cursor:not-allowed}
-
-#moleculeStage{
+#visualLayer{
   position:fixed;
   inset:0;
   display:flex;
@@ -45,52 +35,81 @@ button:disabled{opacity:.5;cursor:not-allowed}
   z-index:0;
 }
 
-#molecule{
-  width:300px;
-  opacity:0.15;
+#visualLayer img{
+  width:280px;
+  opacity:0.12;
   animation:spin 40s linear infinite;
 }
 
 @keyframes spin{
-  from{transform:rotateY(0deg) rotateX(15deg);}
-  to{transform:rotateY(360deg) rotateX(15deg);}
+  from{transform:rotate(0deg);}
+  to{transform:rotate(360deg);}
 }
+
+main{
+  max-width:1200px;
+  margin:auto;
+  background:#f4f6f8;
+  color:#222;
+  padding:30px;
+  border-radius:14px;
+  position:relative;
+  z-index:1;
+}
+
+label{font-weight:600;margin-top:10px;display:block}
+input,button{width:100%;padding:8px;margin-top:6px}
+
+button{
+  background:#263238;
+  color:#fff;
+  border:none;
+  cursor:pointer;
+}
+button:disabled{opacity:.5}
 
 #chemResults{
-  background:#fff;color:#000;border-radius:6px;
-  max-height:200px;overflow:auto;display:none;
+  background:#fff;
+  border:1px solid #ccc;
+  display:none;
 }
-
 #chemResults div{
-  padding:6px;cursor:pointer;border-bottom:1px solid #eee
+  padding:6px;
+  cursor:pointer;
 }
-#chemResults div:hover{background:#e0e0e0}
+#chemResults div:hover{background:#eee}
 
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-  gap:15px;margin-top:20px
+  gap:15px;
+  margin-top:20px;
 }
 
 .card{
-  background:#263238;color:#fff;
-  padding:15px;border-radius:10px;text-align:center
+  background:#263238;
+  color:#fff;
+  padding:15px;
+  border-radius:10px;
+  text-align:center;
 }
 
-.verdict{padding:15px;border-radius:10px;font-size:18px;margin-top:20px}
+.verdict{
+  padding:15px;
+  border-radius:10px;
+  font-size:18px;
+  margin-top:20px;
+}
 .good{background:#2e7d32}
 .warn{background:#ef6c00}
 .bad{background:#c62828}
-
-canvas{margin-top:25px}
 </style>
 </head>
 
 <body>
 
-<!-- MOLECULE VISUAL -->
-<div id="moleculeStage">
-  <div id="molecule"></div>
+<div id="visualLayer">
+  <img id="moleculeImg" src="" alt="">
 </div>
 
 <header>
@@ -101,12 +120,12 @@ canvas{margin-top:25px}
 <main>
 
 <label>Search Chemical</label>
-<input id="chemSearch" placeholder="ethyl, acetone, resin…" oninput="filterChemicals()">
+<input id="chemSearch" placeholder="ethyl, acetone…" oninput="filterChemicals()">
 <div id="chemResults"></div>
 <input type="hidden" id="chemical">
 
 <label>Capacity (TPA)</label>
-<input id="scale" type="number" placeholder="Enter plant capacity" oninput="checkReady()">
+<input id="scale" type="number" oninput="checkReady()">
 
 <button id="evalBtn" onclick="evaluate()" disabled>Evaluate Feasibility</button>
 
@@ -119,47 +138,18 @@ canvas{margin-top:25px}
 
 <div id="verdictBox" class="verdict">Select chemical & capacity</div>
 
-<canvas id="chart"></canvas>
-
 </main>
 
 <script>
-let CHEM_DB=[],DB_READY=false,chart;
+let CHEM_DB=[],DB_READY=false;
 
+/* THEMES */
 const THEMES={
   Esterification:"#1f2a44",
   Hydrogenation:"#1b5e20",
   Oxidation:"#263238",
   Resin_Polymerization:"#4a148c",
   default:"#1f2a44"
-};
-
-/* SIMPLE INLINE SVG MOLECULES */
-const MOLECULES={
-  "Ethyl Acetate":`
-  <svg viewBox="0 0 200 120">
-    <circle cx="40" cy="60" r="8"/><circle cx="80" cy="60" r="8"/>
-    <circle cx="120" cy="60" r="8"/><circle cx="160" cy="60" r="8"/>
-    <line x1="48" y1="60" x2="72" y2="60" stroke="black"/>
-    <line x1="88" y1="60" x2="112" y2="60" stroke="black"/>
-    <line x1="128" y1="60" x2="152" y2="60" stroke="black"/>
-  </svg>`,
-  "Acetone":`
-  <svg viewBox="0 0 200 120">
-    <circle cx="50" cy="60" r="8"/>
-    <circle cx="100" cy="60" r="10"/>
-    <circle cx="150" cy="60" r="8"/>
-    <line x1="58" y1="60" x2="90" y2="60" stroke="black"/>
-    <line x1="110" y1="60" x2="142" y2="60" stroke="black"/>
-  </svg>`,
-  "Isopropyl Alcohol":`
-  <svg viewBox="0 0 200 120">
-    <circle cx="70" cy="60" r="8"/>
-    <circle cx="110" cy="40" r="8"/>
-    <circle cx="110" cy="80" r="8"/>
-    <line x1="78" y1="60" x2="102" y2="44" stroke="black"/>
-    <line x1="78" y1="60" x2="102" y2="76" stroke="black"/>
-  </svg>`
 };
 
 /* LOAD CSV */
@@ -170,7 +160,8 @@ fetch("chemicals.csv")
   const h=rows[0].split(",");
   CHEM_DB=rows.slice(1).map(r=>{
     const v=r.split(",");
-    let o={};h.forEach((k,i)=>o[k.trim()]=(v[i]||"").trim());
+    let o={};
+    h.forEach((k,i)=>o[k.trim()]=(v[i]||"").trim());
     return o;
   });
   DB_READY=true;
@@ -180,7 +171,7 @@ fetch("chemicals.csv")
 function filterChemicals(){
   const q=chemSearch.value.toLowerCase();
   chemResults.innerHTML="";
-  if(q.length<2)return chemResults.style.display="none";
+  if(q.length<2){chemResults.style.display="none";return;}
   CHEM_DB.filter(c=>c.chemical_name.toLowerCase().includes(q))
   .forEach(c=>{
     const d=document.createElement("div");
@@ -196,8 +187,11 @@ function selectChemical(c){
   chemical.value=c.chemical_id;
   chemResults.style.display="none";
 
-  document.body.style.background=THEMES[c.process_family]||THEMES.default;
-  molecule.innerHTML=MOLECULES[c.chemical_name]||"";
+  document.body.style.background =
+    THEMES[c.process_family] || THEMES.default;
+
+  moleculeImg.src="assets/molecule.png";
+  moleculeImg.style.display="block";
 
   checkReady();
 }
@@ -208,13 +202,10 @@ function checkReady(){
 
 function evaluate(){
   const c=CHEM_DB.find(x=>x.chemical_id===chemical.value);
-  const S=+scale.value;
-
-  grid.style.display="grid";
-
   const opex=+c.base_opex_rs_per_t;
   const ebitda=((c.selling_price_rs_per_t-opex)/c.selling_price_rs_per_t*100).toFixed(1);
 
+  grid.style.display="grid";
   capex.innerText=`₹${c.base_capex_cr} Cr`;
   opexEl.innerText=`₹${opex}`;
   ebitdaEl.innerText=`${ebitda} %`;
@@ -231,12 +222,12 @@ const chemical=document.getElementById("chemical");
 const scale=document.getElementById("scale");
 const evalBtn=document.getElementById("evalBtn");
 
+const moleculeImg=document.getElementById("moleculeImg");
 const capex=document.getElementById("capex");
 const opexEl=document.getElementById("opex");
 const ebitdaEl=document.getElementById("ebitda");
 const ideal=document.getElementById("ideal");
 const verdictBox=document.getElementById("verdictBox");
-const molecule=document.getElementById("molecule");
 const grid=document.getElementById("grid");
 </script>
 
