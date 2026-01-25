@@ -4,7 +4,12 @@
 <meta charset="UTF-8">
 <title>Small-Scale Chemical Feasibility Platform</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Charts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 body{font-family:Segoe UI;background:#1f2a44;color:#fff;margin:0}
@@ -13,7 +18,7 @@ main{max-width:1200px;margin:auto;background:#f4f6f8;color:#222;
 padding:30px;border-radius:14px}
 label{font-weight:600;margin-top:10px;display:block}
 select,input,button{width:100%;padding:8px;margin-top:6px}
-button{background:#263238;color:#fff;border:none;margin-top:15px;cursor:pointer}
+button{background:#263238;color:#fff;border:none;margin-top:12px;cursor:pointer}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
 gap:15px;margin-top:20px}
 .card{background:#263238;color:#fff;padding:15px;border-radius:10px;text-align:center}
@@ -54,6 +59,8 @@ footer{text-align:center;padding:15px;opacity:.8}
 
 <div id="verdictBox" class="verdict"></div>
 
+<button onclick="downloadReport()">📄 Download Feasibility Report (PDF)</button>
+
 <h2>Utilities & Manpower</h2>
 <table>
 <tr><th>Parameter</th><th>Value</th></tr>
@@ -74,16 +81,16 @@ Indicative only • Not a substitute for detailed engineering
 <script>
 /* ================= CHEMICAL DATABASE ================= */
 const chemicals = {
-  "Ethyl Acetate":      {min:2500, ideal:[3000,6000], steam:1.4, power:100, capex:22, opex:72000, price:90000},
-  "Butyl Acetate":      {min:2000, ideal:[3000,5000], steam:1.5, power:105, capex:24, opex:76000, price:98000},
-  "Iso-Propyl Acetate": {min:1500, ideal:[2000,4000], steam:1.1, power:90,  capex:18, opex:68000, price:98000},
-  "Amyl Acetate":       {min:1000, ideal:[1500,3000], steam:1.2, power:95,  capex:16, opex:70000, price:125000},
-  "Alkyd Resin":        {min:2000, ideal:[2500,5000], steam:0.9, power:80,  capex:20, opex:65000, price:95000},
-  "Phenolic Resin":    {min:3000, ideal:[4000,7000], steam:1.0, power:85,  capex:26, opex:72000, price:100000},
-  "Benzyl Alcohol":    {min:800,  ideal:[1200,2500], steam:0.8, power:70,  capex:14, opex:78000, price:140000},
-  "IPA (Isopropanol)": {min:4000, ideal:[6000,10000],steam:1.3,power:110, capex:30, opex:70000, price:85000},
-  "Ethyl Lactate":     {min:1000, ideal:[1500,3000], steam:1.1, power:95,  capex:17, opex:82000, price:135000},
-  "Non-ionic Surfactant":{min:1200,ideal:[2000,4000],steam:0.9,power:75, capex:19, opex:88000, price:150000}
+  "Ethyl Acetate":{min:2500,ideal:[3000,6000],steam:1.4,power:100,capex:22,opex:72000,price:90000},
+  "Butyl Acetate":{min:2000,ideal:[3000,5000],steam:1.5,power:105,capex:24,opex:76000,price:98000},
+  "Iso-Propyl Acetate":{min:1500,ideal:[2000,4000],steam:1.1,power:90,capex:18,opex:68000,price:98000},
+  "Amyl Acetate":{min:1000,ideal:[1500,3000],steam:1.2,power:95,capex:16,opex:70000,price:125000},
+  "Alkyd Resin":{min:2000,ideal:[2500,5000],steam:0.9,power:80,capex:20,opex:65000,price:95000},
+  "Phenolic Resin":{min:3000,ideal:[4000,7000],steam:1.0,power:85,capex:26,opex:72000,price:100000},
+  "Benzyl Alcohol":{min:800,ideal:[1200,2500],steam:0.8,power:70,capex:14,opex:78000,price:140000},
+  "IPA (Isopropanol)":{min:4000,ideal:[6000,10000],steam:1.3,power:110,capex:30,opex:70000,price:85000},
+  "Ethyl Lactate":{min:1000,ideal:[1500,3000],steam:1.1,power:95,capex:17,opex:82000,price:135000},
+  "Non-Ionic Surfactant":{min:1200,ideal:[2000,4000],steam:0.9,power:75,capex:19,opex:88000,price:150000}
 };
 
 /* Populate dropdown */
@@ -122,7 +129,7 @@ function evaluate(){
   manpowerEl.innerText=manpower;
 
   let verdict="Commercially Viable", cls="good";
-  if(scale<c.min || ebitda<10){ verdict="Not Recommended"; cls="bad";}
+  if(scale<c.min || ebitda<10){ verdict="Not Recommended at Selected Scale"; cls="bad";}
   else if(scale<c.ideal[0] || ebitda<15){ verdict="Marginal – Scale Sensitive"; cls="warn";}
 
   verdictBox.className="verdict "+cls;
@@ -131,6 +138,7 @@ function evaluate(){
   drawChart(c);
 }
 
+/* ================= CHART ================= */
 function drawChart(c){
   const scales=[500,1000,2000,3000,5000,8000];
   const data=scales.map(s=>{
@@ -145,6 +153,37 @@ function drawChart(c){
   });
 }
 
+/* ================= PDF REPORT ================= */
+function downloadReport(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF("p","mm","a4");
+
+  let y=20;
+  const line=t=>{doc.text(t,15,y);y+=7;if(y>280){doc.addPage();y=20;}};
+
+  line("CONCEPT / PRE-FEASIBILITY REPORT");
+  y+=5;
+  line("Chemical: "+sel.value);
+  line("Capacity: "+scale.value+" TPA");
+  y+=5;
+  line("CAPEX: "+capex.innerText);
+  line("OPEX: "+opexEl.innerText);
+  line("EBITDA: "+ebitdaEl.innerText);
+  y+=5;
+  line("Steam: "+steamEl.innerText+" t/y");
+  line("Power: "+powerEl.innerText+" kWh/y");
+  line("Manpower: "+manpowerEl.innerText);
+  y+=5;
+  line("Verdict:");
+  line(verdictBox.innerText);
+  y+=5;
+  line("DISCLAIMER:");
+  line("Concept-level study. Indicative only. Not a substitute for detailed engineering.");
+
+  doc.save(sel.value.replace(/ /g,"_")+"_Feasibility_Report.pdf");
+}
+
+/* Init */
 const capex=document.getElementById("capex");
 const opexEl=document.getElementById("opex");
 const ebitdaEl=document.getElementById("ebitda");
