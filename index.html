@@ -6,21 +6,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body{
-  margin:0;
-  font-family:Segoe UI, Arial, sans-serif;
-  background:#1f2a44;
-  color:#fff;
-}
+body{margin:0;font-family:Segoe UI,Arial;background:#1f2a44;color:#fff}
 header{text-align:center;padding:24px}
-main{
-  max-width:1200px;
-  margin:auto;
-  background:#f4f6f8;
-  color:#222;
-  padding:30px;
-  border-radius:14px;
-}
+main{max-width:1200px;margin:auto;background:#f4f6f8;color:#222;padding:30px;border-radius:14px}
 label{font-weight:600;display:block;margin-top:12px}
 input,button{width:100%;padding:10px;margin-top:6px;font-size:15px}
 button{background:#263238;color:#fff;border:none;cursor:pointer}
@@ -28,45 +16,21 @@ button{background:#263238;color:#fff;border:none;cursor:pointer}
 #chemResults div{padding:8px;cursor:pointer}
 #chemResults div:hover{background:#eee}
 #casDisplay{margin-top:6px;font-size:14px;color:#555}
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:15px;margin-top:25px
-}
-.card{
-  background:#263238;
-  color:#fff;
-  padding:15px;
-  border-radius:10px;
-  text-align:center
-}
-.verdict{
-  margin-top:20px;
-  padding:15px;
-  border-radius:10px;
-  font-size:18px;
-  font-weight:600
-}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px;margin-top:25px}
+.card{background:#263238;color:#fff;padding:15px;border-radius:10px;text-align:center}
+.verdict{margin-top:20px;padding:15px;border-radius:10px;font-size:18px;font-weight:600}
 .good{background:#2e7d32}
 .warn{background:#ef6c00}
 .bad{background:#c62828}
-.debug{
-  background:#fff;
-  color:#000;
-  margin-top:25px;
-  padding:15px;
-  border-radius:8px;
-  font-size:13px;
-  white-space:pre-wrap
-}
+.debug{background:#fff;color:#000;margin-top:25px;padding:15px;border-radius:8px;font-size:13px;white-space:pre-wrap}
 </style>
 </head>
 
 <body>
 
 <header>
-  <h1>Chemical Plant Feasibility Tool</h1>
-  <p>Engineering-first feasibility evaluation</p>
+<h1>Chemical Plant Feasibility Tool</h1>
+<p>Engineering-first feasibility evaluation</p>
 </header>
 
 <main>
@@ -88,9 +52,7 @@ button{background:#263238;color:#fff;border:none;cursor:pointer}
   <div class="card"><h3>Scale Verdict</h3><div id="ideal"></div></div>
 </div>
 
-<div id="verdictBox" class="verdict">
-Select chemical & capacity
-</div>
+<div id="verdictBox" class="verdict">Select chemical & capacity</div>
 
 <h3>Debug – Selected Chemical Record</h3>
 <div id="debug" class="debug"></div>
@@ -98,20 +60,25 @@ Select chemical & capacity
 </main>
 
 <script>
-let CHEM_DB = [];
-let SELECTED_CHEM = null;
+let CHEM_DB=[];
+let SELECTED_CHEM=null;
 
-/* LOAD CSV */
+/* ===== LOAD CSV / TSV (AUTO-DETECT) ===== */
 fetch("chemicals.csv")
 .then(r=>r.text())
 .then(t=>{
   const rows=t.trim().split("\n");
-  const headers=rows[0].split(",").map(h=>h.trim());
 
-  CHEM_DB=rows.slice(1).map(r=>{
-    const v=r.split(",");
+  // Detect delimiter
+  const delimiter = rows[0].includes("\t") ? "\t" : ",";
+
+  const headers = rows[0].split(delimiter).map(h=>h.trim());
+
+  CHEM_DB = rows.slice(1).map(r=>{
+    const v=r.split(delimiter);
     let raw={};
     headers.forEach((h,i)=>raw[h]=(v[i]||"").trim());
+
     return {
       chemical_id: raw.chemical_id,
       chemical_name: raw.chemical_name,
@@ -121,7 +88,7 @@ fetch("chemicals.csv")
   });
 });
 
-/* SEARCH */
+/* ===== SEARCH ===== */
 function filterChemicals(){
   const q=chemSearch.value.trim().toLowerCase();
   chemResults.innerHTML="";
@@ -131,7 +98,7 @@ function filterChemicals(){
   if(q.length<2){chemResults.style.display="none";return;}
 
   const matches=CHEM_DB.filter(c =>
-    c.chemical_name.toLowerCase().includes(q)
+    c.chemical_name && c.chemical_name.toLowerCase().includes(q)
   );
 
   matches.forEach(c=>{
@@ -144,7 +111,7 @@ function filterChemicals(){
   chemResults.style.display="block";
 }
 
-/* SELECT */
+/* ===== SELECT ===== */
 function selectChemical(c){
   SELECTED_CHEM=c;
   chemSearch.value=c.chemical_name;
@@ -152,18 +119,15 @@ function selectChemical(c){
   casDisplay.innerText=`CAS Number: ${c.cas}`;
 }
 
-/* EVALUATE — NOW IMPOSSIBLE TO FAIL SILENTLY */
+/* ===== EVALUATE ===== */
 function evaluate(){
   const typed=chemSearch.value.trim().toLowerCase();
 
   if(!SELECTED_CHEM){
     const matches=CHEM_DB.filter(c =>
-      c.chemical_name.toLowerCase().includes(typed)
+      c.chemical_name && c.chemical_name.toLowerCase().includes(typed)
     );
-    if(matches.length===1){
-      SELECTED_CHEM=matches[0];
-      casDisplay.innerText=`CAS Number: ${SELECTED_CHEM.cas}`;
-    }
+    if(matches.length===1) SELECTED_CHEM=matches[0];
   }
 
   if(!SELECTED_CHEM || !scale.value){
@@ -176,7 +140,6 @@ function evaluate(){
 
   resultGrid.style.display="grid";
 
-  /* SIMPLE, GUARANTEED FEASIBILITY MODEL */
   const capex=(S/1000*12).toFixed(1);
   const opex=Math.max(25000,90000-S*8);
   const sell=100000;
@@ -186,7 +149,7 @@ function evaluate(){
   opexEl.innerText=opex;
   ebitdaEl.innerText=ebitda;
 
-  idealEl.innerText=
+  idealEl.innerText =
     S<500?"Too small":
     S<5000?"Feasible niche":
     S<20000?"Commercial scale":
@@ -202,7 +165,7 @@ function evaluate(){
   debug.innerText=JSON.stringify(c,null,2);
 }
 
-/* ELEMENTS */
+/* ===== ELEMENTS ===== */
 const chemSearch=document.getElementById("chemSearch");
 const chemResults=document.getElementById("chemResults");
 const casDisplay=document.getElementById("casDisplay");
