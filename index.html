@@ -1,131 +1,74 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>Chemical Plant Feasibility Tool – Diagnostic</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<style>
-body{margin:0;font-family:Segoe UI;background:#1f2a44;color:#fff}
-header{text-align:center;padding:20px}
-main{max-width:1200px;margin:auto;background:#f4f6f8;color:#222;padding:25px;border-radius:12px}
-button,input{width:100%;padding:10px;margin-top:8px}
-button{background:#263238;color:#fff;border:none}
-pre{background:#000;color:#0f0;padding:12px;font-size:12px;overflow:auto}
-.card{background:#263238;color:#fff;padding:12px;margin-top:10px;border-radius:8px}
-</style>
+  <meta charset="UTF-8" />
+  <title>Homepage Wireframe</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    header, footer { background: #eee; padding: 20px; text-align: center; }
+    .hero { padding: 60px 20px; text-align: center; border-bottom: 1px solid #ccc; }
+    .section { padding: 40px 20px; border-bottom: 1px solid #ddd; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+    .card { border: 1px solid #ccc; padding: 20px; border-radius: 8px; text-align: center; }
+    .search-bar { width: 60%; padding: 12px; font-size: 16px; }
+  </style>
 </head>
-
 <body>
 
 <header>
-<h1>Chemical Plant Feasibility Tool</h1>
-<p>CSV diagnostic mode</p>
+  <nav>
+    <strong>Logo</strong> | Plant Ideas | Feasibility Reports | Tools | Suppliers | Regulations | Contact
+  </nav>
 </header>
 
-<main>
+<section class="hero">
+  <h1>Find the Best Small-Scale Chemical Plant to Start</h1>
+  <p>India-focused feasibility, investment, and ROI insights.</p>
+  <input class="search-bar" placeholder="Enter a chemical or plant idea…" />
+  <p>Trending: PAC | Zinc Sulphate | Silicate</p>
+</section>
 
-<button onclick="loadCSV()">1️⃣ Load chemicals.csv</button>
-<button onclick="evaluate()">2️⃣ Evaluate (forced)</button>
+<section class="section">
+  <h2>Plant Ideas in High Demand</h2>
+  <div class="cards">
+    <div class="card">Chemical Name<br/>Feasibility Score<br/>Investment Range</div>
+    <div class="card">Chemical Name<br/>Feasibility Score<br/>Investment Range</div>
+    <div class="card">Chemical Name<br/>Feasibility Score<br/>Investment Range</div>
+  </div>
+</section>
 
-<div class="card">
-<b>Status</b>
-<div id="status">Waiting…</div>
-</div>
+<section class="section">
+  <h2>Tools to Help You Decide</h2>
+  <div class="cards">
+    <div class="card">Plant Cost Calculator</div>
+    <div class="card">State Feasibility Checker</div>
+    <div class="card">Profit Calculator</div>
+    <div class="card">Plant Selector Wizard</div>
+  </div>
+</section>
 
-<div class="card">
-<b>Raw CSV (first lines)</b>
-<pre id="raw"></pre>
-</div>
+<section class="section">
+  <h2>Feasibility by State</h2>
+  <select>
+    <option>Select State</option>
+    <option>Gujarat</option>
+    <option>Maharashtra</option>
+    <option>Tamil Nadu</option>
+  </select>
+</section>
 
-<div class="card">
-<b>Detected Headers</b>
-<pre id="headers"></pre>
-</div>
+<section class="section">
+  <h2>Start Learning</h2>
+  <div class="cards">
+    <div class="card">How to Start a Chemical Plant in India</div>
+    <div class="card">Required Licenses & Pollution Norms</div>
+    <div class="card">Low-Investment Chemical Business Ideas</div>
+  </div>
+</section>
 
-<div class="card">
-<b>Parsed Chemicals Count</b>
-<pre id="count"></pre>
-</div>
-
-<div class="card">
-<b>Selected Chemical Object</b>
-<pre id="selected"></pre>
-</div>
-
-<div class="card">
-<b>Evaluation Output</b>
-<pre id="output"></pre>
-</div>
-
-</main>
-
-<script>
-let CHEM_DB = [];
-let SELECTED_CHEM = null;
-
-function loadCSV(){
-  fetch("chemicals.csv")
-    .then(r=>{
-      if(!r.ok) throw new Error("Fetch failed: "+r.status);
-      return r.text();
-    })
-    .then(t=>{
-      document.getElementById("status").innerText="CSV loaded";
-
-      const lines = t.split(/\r?\n/).filter(l=>l.trim());
-      document.getElementById("raw").innerText = lines.slice(0,5).join("\n");
-
-      const delimiter = lines[0].includes("\t") ? "\t" : ",";
-      document.getElementById("status").innerText +=
-        " | Delimiter detected: "+(delimiter==="\t"?"TAB":"COMMA");
-
-      const headers = lines[0].split(delimiter);
-      document.getElementById("headers").innerText = JSON.stringify(headers,null,2);
-
-      CHEM_DB = lines.slice(1).map(l=>{
-        const v=l.split(delimiter);
-        let o={};
-        headers.forEach((h,i)=>o[h.trim()]=(v[i]||"").trim());
-        return o;
-      });
-
-      document.getElementById("count").innerText = CHEM_DB.length;
-
-      // auto-pick first chemical if exists
-      if(CHEM_DB.length>0){
-        SELECTED_CHEM = CHEM_DB[0];
-        document.getElementById("selected").innerText =
-          JSON.stringify(SELECTED_CHEM,null,2);
-      }
-    })
-    .catch(e=>{
-      document.getElementById("status").innerText="ERROR: "+e.message;
-    });
-}
-
-function evaluate(){
-  // HARD fallback if CSV failed
-  if(!SELECTED_CHEM){
-    SELECTED_CHEM = {
-      chemical_name:"Methanol (fallback)",
-      CAS_number:"67-56-1"
-    };
-  }
-
-  const S = 1000; // forced scale
-  const capex = (S/1000*12).toFixed(1);
-  const opex = 90000 - S*8;
-  const ebitda = (((100000-opex)/100000)*100).toFixed(1);
-
-  document.getElementById("output").innerText =
-    "Chemical: "+(SELECTED_CHEM.chemical_name||"UNKNOWN")+"\n"+
-    "CAS: "+(SELECTED_CHEM.CAS_number||"UNKNOWN")+"\n"+
-    "CAPEX: "+capex+" Cr\n"+
-    "OPEX: "+opex+" ₹/t\n"+
-    "EBITDA: "+ebitda+" %";
-}
-</script>
+<footer>
+  About | Contact | Privacy | Terms | Partner With Us
+</footer>
 
 </body>
 </html>
