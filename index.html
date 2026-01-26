@@ -2,19 +2,15 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Plant Detail Page Wireframe</title>
+  <title>Homepage Wireframe</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
     header, footer { background: #eee; padding: 20px; text-align: center; }
+    .hero { padding: 60px 20px; text-align: center; border-bottom: 1px solid #ccc; }
     .section { padding: 40px 20px; border-bottom: 1px solid #ddd; }
-    .metrics { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 20px; }
-    .metric-box { flex: 1; min-width: 180px; border: 1px solid #ccc; padding: 20px; border-radius: 8px; text-align: center; }
-    .tabs { display: flex; gap: 20px; padding: 20px; border-bottom: 1px solid #ccc; background: #f9f9f9; }
-    .tab { padding: 10px 20px; border: 1px solid #ccc; border-radius: 6px; background: #fff; cursor: pointer; }
     .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
-    .card, .table-block { border: 1px solid #ccc; padding: 20px; border-radius: 8px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    table, th, td { border: 1px solid #aaa; padding: 8px; }
+    .card { border: 1px solid #ccc; padding: 20px; border-radius: 8px; text-align: center; }
+    .search-bar { width: 60%; padding: 12px; font-size: 16px; }
   </style>
 </head>
 <body>
@@ -25,103 +21,49 @@
   </nav>
 </header>
 
-<section class="section">
-  <p>Home > Plant Ideas > Ethyl Acetate Manufacturing</p>
-  <h1>Ethyl Acetate Manufacturing Plant - India Feasibility</h1>
-  <p>Demand • Investment • ROI • Permissions • Machinery</p>
-
-  <div class="metrics">
-    <div class="metric-box">Demand in India<br/><strong>High</strong></div>
-    <div class="metric-box">Investment<br/><strong>₹45–70 lakh</strong></div>
-    <div class="metric-box">Feasibility Score<br/><strong>8.1 / 10</strong></div>
-    <div class="metric-box">Pollution Category<br/><strong>Orange</strong></div>
-  </div>
-</section>
-
-<div class="tabs">
-  <div class="tab">Overview</div>
-  <div class="tab">Market & Buyers</div>
-  <div class="tab">Process</div>
-  <div class="tab">Investment & ROI</div>
-  <div class="tab">Machinery</div>
-  <div class="tab">Raw Materials</div>
-  <div class="tab">Permissions</div>
-  <div class="tab">Risks</div>
-</div>
-
-<section class="section">
-  <h2>Overview</h2>
-  <p>Short description of the chemical, its applications, and why it is a good opportunity in India.</p>
+<section class="hero">
+  <h1>Find the Best Small-Scale Chemical Plant to Start</h1>
+  <p>India-focused feasibility, investment, and ROI insights.</p>
+  <input class="search-bar" placeholder="Enter a chemical or plant idea…" />
+  <p>Trending: PAC | Zinc Sulphate | Silicate</p>
 </section>
 
 <section class="section">
-  <h2>Market & Buyers</h2>
-  <div class="table-block">
-    <p>Demand Overview</p>
-    <table>
-      <tr><th>Segment</th><th>Usage</th><th>Demand Trend</th></tr>
-      <tr><td>Paints & Coatings</td><td>Solvent</td><td>Growing</td></tr>
-      <tr><td>Pharma</td><td>Extraction</td><td>Stable</td></tr>
-    </table>
+  <h2>Plant Ideas in High Demand</h2>
+  <div class="cards">
+    <div class="card">Chemical Name<br/>Feasibility Score<br/>Investment Range</div>
+    <div class="card">Chemical Name<br/>Feasibility Score<br/>Investment Range</div>
+    <div class="card">Chemical Name<br/>Feasibility Score<br/>Investment Range</div>
   </div>
 </section>
 
 <section class="section">
-  <h2>Raw Materials</h2>
-  <table>
-    <tr><th>Material</th><th>Quantity / Ton</th><th>Price Range</th><th>Availability</th></tr>
-    <tr><td>Acetic Acid</td><td>~650 kg</td><td>₹—</td><td>High</td></tr>
-    <tr><td>Ethanol</td><td>~500 kg</td><td>₹—</td><td>Medium</td></tr>
-  </table>
+  <h2>Tools to Help You Decide</h2>
+  <div class="cards">
+    <div class="card">Plant Cost Calculator</div>
+    <div class="card">State Feasibility Checker</div>
+    <div class="card">Profit Calculator</div>
+    <div class="card">Plant Selector Wizard</div>
+  </div>
 </section>
 
 <section class="section">
-  <h2>Manufacturing Process</h2>
-  <div class="card">Flow Diagram Placeholder</div>
-  <p>Step-by-step simplified description of the process.</p>
+  <h2>Feasibility by State</h2>
+  <select>
+    <option>Select State</option>
+    <option>Gujarat</option>
+    <option>Maharashtra</option>
+    <option>Tamil Nadu</option>
+  </select>
 </section>
 
 <section class="section">
-  <h2>Investment & ROI</h2>
-  <table>
-    <tr><th>Item</th><th>Estimated Cost (₹)</th></tr>
-    <tr><td>Machinery</td><td>—</td></tr>
-    <tr><td>Land & Building</td><td>—</td></tr>
-    <tr><td>Utilities</td><td>—</td></tr>
-  </table>
-  <div class="card">ROI Summary Placeholder</div>
-</section>
-
-<section class="section">
-  <h2>Machinery List</h2>
-  <table>
-    <tr><th>Equipment</th><th>Specs</th><th>Price Range</th></tr>
-    <tr><td>Reactor</td><td>SS316</td><td>₹—</td></tr>
-    <tr><td>Distillation Column</td><td>10–15 trays</td><td>₹—</td></tr>
-  </table>
-</section>
-
-<section class="section">
-  <h2>Permissions Required (India)</h2>
-  <ul>
-    <li>Consent to Establish (CTE)</li>
-    <li>Consent to Operate (CTO)</li>
-    <li>Fire NOC</li>
-    <li>Environmental Clearance (if applicable)</li>
-  </ul>
-</section>
-
-<section class="section">
-  <h2>Risks & Challenges</h2>
-  <ul>
-    <li>Raw material price volatility</li>
-    <li>Competition from established firms</li>
-    <li>Effluent management requirements</li>
-  </ul>
-</section>
-
-<section class="section" style="text-align:center;">
-  <button style="padding: 12px 24px; font-size: 16px;">Download Full Feasibility Report (PDF)</button>
+  <h2>Start Learning</h2>
+  <div class="cards">
+    <div class="card">How to Start a Chemical Plant in India</div>
+    <div class="card">Required Licenses & Pollution Norms</div>
+    <div class="card">Low-Investment Chemical Business Ideas</div>
+  </div>
 </section>
 
 <footer>
