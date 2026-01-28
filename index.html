@@ -1,70 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <title>ChemPilot – Early-stage chemical plant scale & feasibility intelligence</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body { font-family: Arial, sans-serif; margin: 0; background:#f4f6f8; }
-header, footer { background: #1f2a44; color:#fff; padding: 20px; text-align: center; }
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #f4f6f8;
+}
+
+header, footer {
+  background: #1f2a44;
+  color: #fff;
+  padding: 20px;
+  text-align: center;
+}
 
 .hero {
   padding: 60px 20px;
   text-align: center;
-  background:#ffffff;
+  background: #ffffff;
 }
-
-.hero h1 { margin-bottom:10px; }
-.hero p { color:#555; }
 
 .section {
   padding: 40px 20px;
+  background: #ffffff;
   border-top: 1px solid #ddd;
-  background:#fff;
-}
-
-.cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 20px;
-}
-
-.card {
-  border: 1px solid #ccc;
-  padding: 20px;
-  border-radius: 8px;
-  background:#fafafa;
 }
 
 input, select, button {
-  width:100%;
-  padding:12px;
-  margin-top:10px;
-  font-size:16px;
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  margin-top: 10px;
 }
 
 button {
-  background:#1f2a44;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
+  background: #1f2a44;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 #suggestions div {
-  border:1px solid #ccc;
-  padding:10px;
-  cursor:pointer;
+  border: 1px solid #ccc;
+  padding: 10px;
+  cursor: pointer;
 }
 
-#suggestions div:hover { background:#eee; }
+#suggestions div:hover {
+  background: #eee;
+}
 
-#result, #scaleResult {
-  margin-top:15px;
-  padding:12px;
-  background:#e8f5e9;
-  border-radius:6px;
+.box {
+  margin-top: 15px;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+#result {
+  background: #e8f5e9;
+}
+
+#summaryBox {
+  display: none;
+  border: 1px solid #ccc;
+  background: #f9fafb;
 }
 </style>
 </head>
@@ -80,53 +85,43 @@ button {
   Contact
 </header>
 
-<!-- HERO -->
 <section class="hero">
   <h1>ChemPilot</h1>
   <p>Early-stage chemical plant scale & feasibility intelligence</p>
 </section>
 
-<!-- CHEMPILOT TOOL -->
 <section class="section">
   <h2>Check Commercial Feasibility</h2>
 
   <label>Chemical / Compound</label>
   <input id="chemicalInput" placeholder="Start typing chemical name…" autocomplete="off">
+
   <div id="suggestions"></div>
-  <div id="result"></div>
+  <div id="result" class="box"></div>
 
   <button id="nextBtn" style="display:none;">Next: Check commercial scale →</button>
 
   <div id="scaleSection" style="display:none; margin-top:20px;">
     <label>Intended Plant Capacity</label>
     <input id="capacityValue" type="number" placeholder="e.g. 5000">
+
     <select id="capacityUnit">
-      <option value="TPA">TPA</option>
-      <option value="TPD">TPD</option>
+      <option value="TPA">TPA (Tonnes per annum)</option>
+      <option value="TPD">TPD (Tonnes per day)</option>
       <option value="kg/day">kg/day</option>
     </select>
+
     <button id="analyzeBtn">Analyze feasibility</button>
-    <div id="scaleResult"></div>
+
+    <div id="scaleResult" class="box"></div>
+
+    <div id="summaryBox" class="box"></div>
   </div>
 </section>
 
-<!-- CONTENT SECTIONS -->
 <section class="section">
   <h2>Popular Plant Ideas</h2>
-  <div class="cards">
-    <div class="card">PAC – Water Treatment</div>
-    <div class="card">Zinc Sulphate – Agriculture</div>
-    <div class="card">Sodium Silicate – Detergents</div>
-  </div>
-</section>
-
-<section class="section">
-  <h2>Learn & Decide Better</h2>
-  <div class="cards">
-    <div class="card">Licenses & Pollution Norms</div>
-    <div class="card">Low CAPEX Chemical Plants</div>
-    <div class="card">Mistakes First-time Founders Make</div>
-  </div>
+  <p>PAC • Zinc Sulphate • Sodium Silicate</p>
 </section>
 
 <footer>
@@ -135,53 +130,97 @@ button {
 
 <script>
 const chemicals = [
-  { name:"Ethyl Acetate", cas:"141-78-6" },
-  { name:"Ethanol", cas:"64-17-5" },
-  { name:"Methanol", cas:"67-56-1" },
-  { name:"Acetone", cas:"67-64-1" }
+  { name: "Ethyl Acetate", cas: "141-78-6" },
+  { name: "Ethanol", cas: "64-17-5" },
+  { name: "Methanol", cas: "67-56-1" },
+  { name: "Acetone", cas: "67-64-1" }
 ];
+
+let selectedChemical = null;
 
 const input = document.getElementById("chemicalInput");
 const suggestions = document.getElementById("suggestions");
 const result = document.getElementById("result");
 const nextBtn = document.getElementById("nextBtn");
 const scaleSection = document.getElementById("scaleSection");
+const scaleResult = document.getElementById("scaleResult");
+const summaryBox = document.getElementById("summaryBox");
 
 input.addEventListener("input", () => {
   suggestions.innerHTML = "";
-  nextBtn.style.display="none";
-  scaleSection.style.display="none";
-  result.innerHTML="";
+  result.innerHTML = "";
+  scaleResult.innerHTML = "";
+  summaryBox.style.display = "none";
+  nextBtn.style.display = "none";
+  scaleSection.style.display = "none";
 
-  if(input.value.length < 2) return;
+  if (input.value.length < 2) return;
 
-  chemicals.filter(c=>c.name.toLowerCase().includes(input.value.toLowerCase()))
-    .forEach(c=>{
-      const d=document.createElement("div");
-      d.innerText=`${c.name} (CAS ${c.cas})`;
-      d.onclick=()=>{
-        input.value=c.name;
-        suggestions.innerHTML="";
-        result.innerText=`Selected: ${c.name} — CAS ${c.cas}`;
-        nextBtn.style.display="block";
-      };
-      suggestions.appendChild(d);
-    });
+  chemicals.filter(c =>
+    c.name.toLowerCase().includes(input.value.toLowerCase())
+  ).forEach(c => {
+    const div = document.createElement("div");
+    div.innerText = `${c.name} (CAS ${c.cas})`;
+    div.onclick = () => {
+      selectedChemical = c;
+      input.value = c.name;
+      suggestions.innerHTML = "";
+      result.innerHTML = `Selected: <strong>${c.name}</strong> — CAS ${c.cas}`;
+      nextBtn.style.display = "block";
+    };
+    suggestions.appendChild(div);
+  });
 });
 
-nextBtn.onclick=()=>scaleSection.style.display="block";
+nextBtn.onclick = () => {
+  scaleSection.style.display = "block";
+};
 
-document.getElementById("analyzeBtn").onclick=()=>{
-  const v=Number(document.getElementById("capacityValue").value);
-  const u=document.getElementById("capacityUnit").value;
-  if(!v){alert("Enter capacity");return;}
+document.getElementById("analyzeBtn").onclick = () => {
+  const value = Number(document.getElementById("capacityValue").value);
+  const unit = document.getElementById("capacityUnit").value;
 
-  let verdict = v>=5000 ? "🟢 Likely viable" :
-                v>=1000 ? "🟠 Borderline" :
-                          "🔴 Unlikely viable";
+  if (!value) {
+    alert("Please enter intended capacity.");
+    return;
+  }
 
-  document.getElementById("scaleResult").innerHTML =
-    `You entered ${v} ${u}<br><strong>${verdict}</strong>`;
+  let verdict = "";
+  let color = "";
+
+  if (unit === "TPA") {
+    if (value >= 5000) { verdict = "🟢 Likely viable"; color = "#2e7d32"; }
+    else if (value >= 1000) { verdict = "🟠 Borderline"; color = "#ef6c00"; }
+    else { verdict = "🔴 Unlikely viable"; color = "#c62828"; }
+  }
+
+  if (unit === "TPD") {
+    if (value >= 15) { verdict = "🟢 Likely viable"; color = "#2e7d32"; }
+    else if (value >= 5) { verdict = "🟠 Borderline"; color = "#ef6c00"; }
+    else { verdict = "🔴 Unlikely viable"; color = "#c62828"; }
+  }
+
+  if (unit === "kg/day") {
+    if (value >= 15000) { verdict = "🟢 Likely viable"; color = "#2e7d32"; }
+    else if (value >= 5000) { verdict = "🟠 Borderline"; color = "#ef6c00"; }
+    else { verdict = "🔴 Unlikely viable"; color = "#c62828"; }
+  }
+
+  scaleResult.innerHTML =
+    `<strong style="color:${color};">${verdict}</strong>`;
+
+  summaryBox.style.display = "block";
+  summaryBox.innerHTML = `
+    <strong>Summary</strong><br><br>
+    <strong>Chemical:</strong> ${selectedChemical.name}<br>
+    <strong>CAS:</strong> ${selectedChemical.cas}<br>
+    <strong>Capacity:</strong> ${value} ${unit}<br><br>
+    <strong style="color:${color};">${verdict}</strong><br><br>
+    <small>
+      High-level feasibility check only.
+      Detailed engineering and market analysis not included.
+    </small>
+  `;
 };
 </script>
 
