@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-:root {
+:root{
   --primary:#1f2a44;
   --bg:#f4f6f8;
   --card:#ffffff;
@@ -16,81 +16,75 @@
   --danger:#c62828;
 }
 
-body {
+body{
   margin:0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  background: var(--bg);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  background:var(--bg);
   color:#222;
 }
 
-header, footer {
-  background: var(--primary);
+header,footer{
+  background:var(--primary);
   color:#fff;
   padding:20px;
   text-align:center;
 }
 
-.hero {
-  background: linear-gradient(135deg,#ffffff,#eef1f5);
+.hero{
+  background:linear-gradient(135deg,#ffffff,#eef1f5);
   padding:70px 20px;
   text-align:center;
 }
 
-.hero h1 {
+.hero h1{
   font-size:2.6rem;
-  margin-bottom:10px;
+  margin:10px 0;
 }
 
-.hero p {
-  font-size:1.1rem;
-  color:#555;
-}
-
-.section {
+.section{
   max-width:900px;
   margin:40px auto;
-  padding:30px;
+  padding:32px;
   background:var(--card);
-  border-radius:14px;
-  box-shadow:0 8px 25px rgba(0,0,0,0.05);
+  border-radius:16px;
+  box-shadow:0 10px 28px rgba(0,0,0,0.06);
 }
 
-h2 {
+h2{
   margin-top:0;
   color:var(--primary);
+  display:flex;
+  align-items:center;
+  gap:12px;
 }
 
-label {
+label{
   font-weight:600;
 }
 
-input, select, button {
+input,select,button{
   width:100%;
   padding:14px;
   font-size:16px;
   margin-top:10px;
-  border-radius:8px;
+  border-radius:10px;
   border:1px solid var(--border);
 }
 
-input:focus, select:focus {
-  outline:none;
-  border-color:var(--primary);
-}
-
-button {
+button{
   background:var(--primary);
   color:#fff;
   border:none;
   cursor:pointer;
-  transition:0.2s;
+  transition:transform .2s, box-shadow .2s;
 }
 
-button:hover {
-  opacity:0.9;
+button:hover{
+  transform:translateY(-1px);
+  box-shadow:0 6px 18px rgba(0,0,0,.15);
 }
 
-#suggestions div {
+#suggestions div{
   border:1px solid var(--border);
   border-top:none;
   padding:12px;
@@ -98,31 +92,57 @@ button:hover {
   background:#fff;
 }
 
-#suggestions div:hover {
+#suggestions div:hover{
   background:#f0f3f7;
 }
 
-.box {
+.box{
   margin-top:20px;
-  padding:16px;
-  border-radius:10px;
+  padding:18px;
+  border-radius:12px;
   border:1px solid var(--border);
   background:#fafafa;
 }
 
-#summaryBox {
+#summaryBox{
   display:none;
-  background:#f9fafb;
 }
 
-.verdict {
-  font-size:1.2rem;
+.verdict{
+  font-size:1.25rem;
   font-weight:700;
 }
 
-footer {
+/* ICONS */
+.icon{
+  width:36px;
+  height:36px;
+}
+
+/* ANIMATIONS */
+.pulse{
+  animation:pulse 2.5s infinite;
+}
+
+.float{
+  animation:float 4s ease-in-out infinite;
+}
+
+@keyframes pulse{
+  0%{transform:scale(1);opacity:.9}
+  50%{transform:scale(1.08);opacity:1}
+  100%{transform:scale(1);opacity:.9}
+}
+
+@keyframes float{
+  0%{transform:translateY(0)}
+  50%{transform:translateY(-6px)}
+  100%{transform:translateY(0)}
+}
+
+footer{
   font-size:14px;
-  opacity:0.9;
+  opacity:.9;
 }
 </style>
 </head>
@@ -130,21 +150,29 @@ footer {
 <body>
 
 <header>
-  <strong>ChemPilot</strong> &nbsp;|&nbsp;
-  Plant Ideas &nbsp;|&nbsp;
-  Feasibility &nbsp;|&nbsp;
-  Tools &nbsp;|&nbsp;
-  Regulations &nbsp;|&nbsp;
-  Contact
+  <strong>ChemPilot</strong> | Feasibility | Tools | Regulations
 </header>
 
 <section class="hero">
+  <!-- CHEMICAL FLASK ICON -->
+  <svg class="icon pulse" viewBox="0 0 64 64" fill="none" stroke="#1f2a44" stroke-width="3">
+    <path d="M24 4h16M32 4v20l14 28a6 6 0 0 1-6 8H24a6 6 0 0 1-6-8l14-28"/>
+    <path d="M22 40h20"/>
+  </svg>
+
   <h1>ChemPilot</h1>
   <p>Early-stage chemical plant scale & feasibility intelligence</p>
 </section>
 
 <section class="section">
-  <h2>Commercial Feasibility Check</h2>
+  <h2>
+    <!-- SEARCH ICON -->
+    <svg class="icon float" viewBox="0 0 64 64" fill="none" stroke="#1f2a44" stroke-width="3">
+      <circle cx="28" cy="28" r="16"/>
+      <line x1="41" y1="41" x2="58" y2="58"/>
+    </svg>
+    Commercial Feasibility Check
+  </h2>
 
   <label>Chemical / Compound</label>
   <input id="chemicalInput" placeholder="Start typing chemical name…" autocomplete="off">
@@ -154,7 +182,7 @@ footer {
 
   <button id="nextBtn" style="display:none;">Next: Check commercial scale →</button>
 
-  <div id="scaleSection" style="display:none; margin-top:25px;">
+  <div id="scaleSection" style="display:none; margin-top:30px;">
     <label>Intended Plant Capacity</label>
     <input id="capacityValue" type="number" placeholder="e.g. 5000">
 
@@ -172,25 +200,34 @@ footer {
 </section>
 
 <section class="section">
-  <h2>Popular Plant Ideas</h2>
-  <p>Poly Aluminium Chloride • Zinc Sulphate • Sodium Silicate</p>
+  <h2>
+    <!-- FACTORY ICON -->
+    <svg class="icon float" viewBox="0 0 64 64" fill="none" stroke="#1f2a44" stroke-width="3">
+      <rect x="6" y="28" width="52" height="30"/>
+      <rect x="12" y="18" width="10" height="10"/>
+      <rect x="28" y="18" width="10" height="10"/>
+      <rect x="44" y="18" width="10" height="10"/>
+    </svg>
+    Popular Plant Ideas
+  </h2>
+  <p>PAC • Zinc Sulphate • Sodium Silicate</p>
 </section>
 
 <footer>
-  © ChemPilot • Early-stage decision support • No consulting • No vendor bias
+  © ChemPilot • Decision-support only • No consulting • No vendor bias
 </footer>
 
 <script>
-const chemicals = [
-  { name:"Ethyl Acetate", cas:"141-78-6" },
-  { name:"Ethanol", cas:"64-17-5" },
-  { name:"Methanol", cas:"67-56-1" },
-  { name:"Acetone", cas:"67-64-1" }
+const chemicals=[
+  {name:"Ethyl Acetate",cas:"141-78-6"},
+  {name:"Ethanol",cas:"64-17-5"},
+  {name:"Methanol",cas:"67-56-1"},
+  {name:"Acetone",cas:"67-64-1"}
 ];
 
 let selectedChemical=null;
 
-const input=document.getElementById("chemicalInput");
+const input=chemicalInput;
 const suggestions=document.getElementById("suggestions");
 const result=document.getElementById("result");
 const nextBtn=document.getElementById("nextBtn");
@@ -206,7 +243,7 @@ input.addEventListener("input",()=>{
   nextBtn.style.display="none";
   scaleSection.style.display="none";
 
-  if(input.value.length<2) return;
+  if(input.value.length<2)return;
 
   chemicals.filter(c=>c.name.toLowerCase().includes(input.value.toLowerCase()))
     .forEach(c=>{
@@ -225,7 +262,7 @@ input.addEventListener("input",()=>{
 
 nextBtn.onclick=()=>scaleSection.style.display="block";
 
-document.getElementById("analyzeBtn").onclick=()=>{
+analyzeBtn.onclick=()=>{
   const v=Number(capacityValue.value);
   const u=capacityUnit.value;
   if(!v){alert("Enter capacity");return;}
