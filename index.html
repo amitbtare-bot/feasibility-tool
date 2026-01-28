@@ -1,74 +1,189 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Homepage Wireframe</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    header, footer { background: #eee; padding: 20px; text-align: center; }
-    .hero { padding: 60px 20px; text-align: center; border-bottom: 1px solid #ccc; }
-    .section { padding: 40px 20px; border-bottom: 1px solid #ddd; }
-    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
-    .card { border: 1px solid #ccc; padding: 20px; border-radius: 8px; text-align: center; }
-    .search-bar { width: 60%; padding: 12px; font-size: 16px; }
-  </style>
+<meta charset="UTF-8" />
+<title>ChemPilot – Early-stage chemical plant scale & feasibility intelligence</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body { font-family: Arial, sans-serif; margin: 0; background:#f4f6f8; }
+header, footer { background: #1f2a44; color:#fff; padding: 20px; text-align: center; }
+
+.hero {
+  padding: 60px 20px;
+  text-align: center;
+  background:#ffffff;
+}
+
+.hero h1 { margin-bottom:10px; }
+.hero p { color:#555; }
+
+.section {
+  padding: 40px 20px;
+  border-top: 1px solid #ddd;
+  background:#fff;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  border: 1px solid #ccc;
+  padding: 20px;
+  border-radius: 8px;
+  background:#fafafa;
+}
+
+input, select, button {
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  font-size:16px;
+}
+
+button {
+  background:#1f2a44;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+#suggestions div {
+  border:1px solid #ccc;
+  padding:10px;
+  cursor:pointer;
+}
+
+#suggestions div:hover { background:#eee; }
+
+#result, #scaleResult {
+  margin-top:15px;
+  padding:12px;
+  background:#e8f5e9;
+  border-radius:6px;
+}
+</style>
 </head>
+
 <body>
 
 <header>
-  <nav>
-    <strong>Logo</strong> | Plant Ideas | Feasibility Reports | Tools | Suppliers | Regulations | Contact
-  </nav>
+  <strong>ChemPilot</strong> |
+  Plant Ideas |
+  Feasibility |
+  Tools |
+  Regulations |
+  Contact
 </header>
 
+<!-- HERO -->
 <section class="hero">
-  <h1>Find the Best Small-Scale Chemical Plant to Start</h1>
-  <p>India-focused feasibility, investment, and ROI insights.</p>
-  <input class="search-bar" placeholder="Enter a chemical or plant idea…" />
-  <p>Trending: PAC | Zinc Sulphate | Silicate</p>
+  <h1>ChemPilot</h1>
+  <p>Early-stage chemical plant scale & feasibility intelligence</p>
 </section>
 
+<!-- CHEMPILOT TOOL -->
 <section class="section">
-  <h2>Plant Ideas in High Demand</h2>
+  <h2>Check Commercial Feasibility</h2>
+
+  <label>Chemical / Compound</label>
+  <input id="chemicalInput" placeholder="Start typing chemical name…" autocomplete="off">
+  <div id="suggestions"></div>
+  <div id="result"></div>
+
+  <button id="nextBtn" style="display:none;">Next: Check commercial scale →</button>
+
+  <div id="scaleSection" style="display:none; margin-top:20px;">
+    <label>Intended Plant Capacity</label>
+    <input id="capacityValue" type="number" placeholder="e.g. 5000">
+    <select id="capacityUnit">
+      <option value="TPA">TPA</option>
+      <option value="TPD">TPD</option>
+      <option value="kg/day">kg/day</option>
+    </select>
+    <button id="analyzeBtn">Analyze feasibility</button>
+    <div id="scaleResult"></div>
+  </div>
+</section>
+
+<!-- CONTENT SECTIONS -->
+<section class="section">
+  <h2>Popular Plant Ideas</h2>
   <div class="cards">
-    <div class="card">Chemical Name<br/>Feasibility Score<br/>Investment Range</div>
-    <div class="card">Chemical Name<br/>Feasibility Score<br/>Investment Range</div>
-    <div class="card">Chemical Name<br/>Feasibility Score<br/>Investment Range</div>
+    <div class="card">PAC – Water Treatment</div>
+    <div class="card">Zinc Sulphate – Agriculture</div>
+    <div class="card">Sodium Silicate – Detergents</div>
   </div>
 </section>
 
 <section class="section">
-  <h2>Tools to Help You Decide</h2>
+  <h2>Learn & Decide Better</h2>
   <div class="cards">
-    <div class="card">Plant Cost Calculator</div>
-    <div class="card">State Feasibility Checker</div>
-    <div class="card">Profit Calculator</div>
-    <div class="card">Plant Selector Wizard</div>
-  </div>
-</section>
-
-<section class="section">
-  <h2>Feasibility by State</h2>
-  <select>
-    <option>Select State</option>
-    <option>Gujarat</option>
-    <option>Maharashtra</option>
-    <option>Tamil Nadu</option>
-  </select>
-</section>
-
-<section class="section">
-  <h2>Start Learning</h2>
-  <div class="cards">
-    <div class="card">How to Start a Chemical Plant in India</div>
-    <div class="card">Required Licenses & Pollution Norms</div>
-    <div class="card">Low-Investment Chemical Business Ideas</div>
+    <div class="card">Licenses & Pollution Norms</div>
+    <div class="card">Low CAPEX Chemical Plants</div>
+    <div class="card">Mistakes First-time Founders Make</div>
   </div>
 </section>
 
 <footer>
-  About | Contact | Privacy | Terms | Partner With Us
+  About | Contact | Privacy | Terms
 </footer>
+
+<script>
+const chemicals = [
+  { name:"Ethyl Acetate", cas:"141-78-6" },
+  { name:"Ethanol", cas:"64-17-5" },
+  { name:"Methanol", cas:"67-56-1" },
+  { name:"Acetone", cas:"67-64-1" }
+];
+
+const input = document.getElementById("chemicalInput");
+const suggestions = document.getElementById("suggestions");
+const result = document.getElementById("result");
+const nextBtn = document.getElementById("nextBtn");
+const scaleSection = document.getElementById("scaleSection");
+
+input.addEventListener("input", () => {
+  suggestions.innerHTML = "";
+  nextBtn.style.display="none";
+  scaleSection.style.display="none";
+  result.innerHTML="";
+
+  if(input.value.length < 2) return;
+
+  chemicals.filter(c=>c.name.toLowerCase().includes(input.value.toLowerCase()))
+    .forEach(c=>{
+      const d=document.createElement("div");
+      d.innerText=`${c.name} (CAS ${c.cas})`;
+      d.onclick=()=>{
+        input.value=c.name;
+        suggestions.innerHTML="";
+        result.innerText=`Selected: ${c.name} — CAS ${c.cas}`;
+        nextBtn.style.display="block";
+      };
+      suggestions.appendChild(d);
+    });
+});
+
+nextBtn.onclick=()=>scaleSection.style.display="block";
+
+document.getElementById("analyzeBtn").onclick=()=>{
+  const v=Number(document.getElementById("capacityValue").value);
+  const u=document.getElementById("capacityUnit").value;
+  if(!v){alert("Enter capacity");return;}
+
+  let verdict = v>=5000 ? "🟢 Likely viable" :
+                v>=1000 ? "🟠 Borderline" :
+                          "🔴 Unlikely viable";
+
+  document.getElementById("scaleResult").innerHTML =
+    `You entered ${v} ${u}<br><strong>${verdict}</strong>`;
+};
+</script>
 
 </body>
 </html>
